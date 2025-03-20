@@ -13,7 +13,6 @@ import { TPurposeType } from '../otp/otp.interface';
 import { otpSendEmail } from '../../utils/eamilNotifiacation';
 import { createToken, verifyToken } from '../../utils/tokenManage';
 import mongoose from 'mongoose';
-import Business from '../business/business.model';
 import bcrypt from 'bcrypt';
 
 export type IFilter = {
@@ -145,57 +144,57 @@ const otpVerifyAndCreateUser = async ({
 
  
 
-  // const isExist = await User.isUserExist(email as string);
+  const isExist = await User.isUserExist(email as string);
 
-  // if (isExist) {
-  //   throw new AppError(
-  //     httpStatus.FORBIDDEN,
-  //     'User already exists with this email',
-  //   );
-  // }
-
-  const userExist = await User.isUserExist(email as string);
-
-  // const userExist = await User.findOne({ email: email, role: role });
-
-  if (userExist) {
-    console.log('userExist');
-    
-    const passwordEncript = await bcrypt.hash(password, 10);
-
-    const user = await User.findOneAndUpdate(
-      { email: email },
-      { role: role, asRole: asRole, password: passwordEncript },
-      {
-        new: true,
-      },
+  if (isExist) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'User already exists with this email',
     );
-
-    if (!user) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
-    }
-
-    const jwtPayload: {
-      userId: string;
-      role: string;
-      fullName: string;
-      email: string;
-    } = {
-      fullName: user?.fullName,
-      email: user.email,
-      userId: user?._id?.toString() as string,
-      role: user?.role,
-    };
-
-    const userToken = createToken({
-      payload: jwtPayload,
-      access_secret: config.jwt_access_secret as string,
-      expity_time: config.jwt_access_expires_in as string | number,
-    });
-
-    return { user, userToken };
-
   }
+
+  // const userExist = await User.isUserExist(email as string);
+
+  // // const userExist = await User.findOne({ email: email, role: role });
+
+  // if (userExist) {
+  //   console.log('userExist');
+    
+  //   const passwordEncript = await bcrypt.hash(password, 10);
+
+  //   const user = await User.findOneAndUpdate(
+  //     { email: email },
+  //     { role: role, asRole: asRole, password: passwordEncript },
+  //     {
+  //       new: true,
+  //     },
+  //   );
+
+  //   if (!user) {
+  //     throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
+  //   }
+
+  //   const jwtPayload: {
+  //     userId: string;
+  //     role: string;
+  //     fullName: string;
+  //     email: string;
+  //   } = {
+  //     fullName: user?.fullName,
+  //     email: user.email,
+  //     userId: user?._id?.toString() as string,
+  //     role: user?.role,
+  //   };
+
+  //   const userToken = createToken({
+  //     payload: jwtPayload,
+  //     access_secret: config.jwt_access_secret as string,
+  //     expity_time: config.jwt_access_expires_in as string | number,
+  //   });
+
+  //   return { user, userToken };
+
+  // }
 
 
  const userData = {
@@ -212,25 +211,25 @@ const otpVerifyAndCreateUser = async ({
     throw new AppError(httpStatus.BAD_REQUEST, 'User creation failed');
   }
 
-  const jwtPayload: {
-    userId: string;
-    role: string;
-    fullName: string;
-    email: string;
-  } = {
-    fullName: user?.fullName,
-    email: user.email,
-    userId: user?._id?.toString() as string,
-    role: user?.role,
-  };
+  // const jwtPayload: {
+  //   userId: string;
+  //   role: string;
+  //   fullName: string;
+  //   email: string;
+  // } = {
+  //   fullName: user?.fullName,
+  //   email: user.email,
+  //   userId: user?._id?.toString() as string,
+  //   role: user?.role,
+  // };
 
-  const userToken = createToken({
-    payload: jwtPayload,
-    access_secret: config.jwt_access_secret as string,
-    expity_time: config.jwt_access_expires_in as string | number,
-  });
+  // const userToken = createToken({
+  //   payload: jwtPayload,
+  //   access_secret: config.jwt_access_secret as string,
+  //   expity_time: config.jwt_access_expires_in as string | number,
+  // });
 
-  return { user, userToken };
+  return user;
 };
 
 const userSwichRoleService = async (id: string) => {
@@ -247,11 +246,7 @@ const userSwichRoleService = async (id: string) => {
       swichRole = 'customer';
     
     }else{
-      const business = await Business.findOne({ businessId: id });
-
-      if (!business) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Please create business account first!!');
-      }
+      
 
       swichRole = 'business';
     }

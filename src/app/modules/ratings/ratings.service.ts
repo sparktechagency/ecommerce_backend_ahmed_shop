@@ -5,68 +5,68 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import { User } from '../user/user.models';
 import { TReview } from './ratings.interface';
 import { Review } from './ratings.model';
-import Business from '../business/business.model';
+// import Business from '../business/business.model';
 
 const createReviewService = async (payload: TReview) => {
-  try {
-    // console.log('Payload:', payload);
-    const customer = await User.findById(payload.customerId);
-    if (!customer) {
-      throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-    }
-    const business = await Business.findById(payload.businessId);
-    if (!business) {
-      throw new AppError(httpStatus.NOT_FOUND, 'Business not found!');
-    }
-    // console.log({ business });
+  // try {
+  //   // console.log('Payload:', payload);
+  //   const customer = await User.findById(payload.customerId);
+  //   if (!customer) {
+  //     throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  //   }
+  //   const business = await Business.findById(payload.businessId);
+  //   if (!business) {
+  //     throw new AppError(httpStatus.NOT_FOUND, 'Business not found!');
+  //   }
+  //   // console.log({ business });
 
-    const result = await Review.create(payload);
+  //   const result = await Review.create(payload);
 
-    if (!result) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Failed to add Business review!',
-      );
-    }
-    // console.log({ result });
+  //   if (!result) {
+  //     throw new AppError(
+  //       httpStatus.BAD_REQUEST,
+  //       'Failed to add Business review!',
+  //     );
+  //   }
+  //   // console.log({ result });
 
-    let { reviewCount, ratings } = business;
-    // console.log({ ratings });
-    // console.log({ reviewCount });
+  //   let { reviewCount, ratings } = business;
+  //   // console.log({ ratings });
+  //   // console.log({ reviewCount });
 
-    const newRating =
-      (ratings * reviewCount + result.rating) / (reviewCount + 1);
-    // console.log({ newRating });
+  //   const newRating =
+  //     (ratings * reviewCount + result.rating) / (reviewCount + 1);
+  //   // console.log({ newRating });
 
-    const updatedRegistration = await Business.findByIdAndUpdate(
-      business._id,
-      {
-        reviewCount: reviewCount + 1,
-        ratings: newRating,
-      },
-      { new: true },
-    );
+  //   const updatedRegistration = await Business.findByIdAndUpdate(
+  //     business._id,
+  //     {
+  //       reviewCount: reviewCount + 1,
+  //       ratings: newRating,
+  //     },
+  //     { new: true },
+  //   );
 
-    if (!updatedRegistration) {
-      throw new AppError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        'Failed to update Business Ratings!',
-      );
-    }
+  //   if (!updatedRegistration) {
+  //     throw new AppError(
+  //       httpStatus.INTERNAL_SERVER_ERROR,
+  //       'Failed to update Business Ratings!',
+  //     );
+  //   }
 
-    return result;
-  } catch (error) {
-    console.error('Error creating review:', error);
+  //   return result;
+  // } catch (error) {
+  //   console.error('Error creating review:', error);
 
-    if (error instanceof AppError) {
-      throw error;
-    }
+  //   if (error instanceof AppError) {
+  //     throw error;
+  //   }
 
-    throw new AppError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      'An unexpected error occurred while creating the review.',
-    );
-  }
+  //   throw new AppError(
+  //     httpStatus.INTERNAL_SERVER_ERROR,
+  //     'An unexpected error occurred while creating the review.',
+  //   );
+  // }
 };
 
 const getAllReviewByBusinessQuery = async (
@@ -125,59 +125,59 @@ const updateReviewQuery = async (
 };
 
 const deletedReviewQuery = async (id: string, customerId: string) => {
-  if (!id || !customerId) {
-    throw new AppError(400, 'Invalid input parameters');
-  }
+  // if (!id || !customerId) {
+  //   throw new AppError(400, 'Invalid input parameters');
+  // }
 
-  const result = await Review.findOneAndDelete({
-    _id: id,
-    customerId: customerId,
-  });
+  // const result = await Review.findOneAndDelete({
+  //   _id: id,
+  //   customerId: customerId,
+  // });
 
-  if (!result) {
-    throw new AppError(404, 'Review Not Found!');
-  }
+  // if (!result) {
+  //   throw new AppError(404, 'Review Not Found!');
+  // }
 
-  const business = await Business.findById(result.businessId);
-  if (!business) {
-    throw new AppError(404, 'Business not found!');
-  }
+  // const business = await Business.findById(result.businessId);
+  // if (!business) {
+  //   throw new AppError(404, 'Business not found!');
+  // }
 
-  const { reviewCount, ratings } = business;
-  // console.log('reviewCount ratingCount', reviewCount, ratings);
-  // console.log('result.rating', result.rating);
+  // const { reviewCount, ratings } = business;
+  // // console.log('reviewCount ratingCount', reviewCount, ratings);
+  // // console.log('result.rating', result.rating);
 
-  const newRatingCount = ratings - result.rating;
-  // console.log('newRatingCount', newRatingCount);
-  const newReviewCount = reviewCount - 1;
-  // console.log('newReviewCount', newReviewCount);
+  // const newRatingCount = ratings - result.rating;
+  // // console.log('newRatingCount', newRatingCount);
+  // const newReviewCount = reviewCount - 1;
+  // // console.log('newReviewCount', newReviewCount);
 
-  let newAverageRating = 0;
-  // console.log('newAverageRating', newAverageRating);
-  if (newReviewCount > 0) {
-    newAverageRating = newRatingCount / newReviewCount;
-  }
+  // let newAverageRating = 0;
+  // // console.log('newAverageRating', newAverageRating);
+  // if (newReviewCount > 0) {
+  //   newAverageRating = newRatingCount / newReviewCount;
+  // }
 
-  if (newReviewCount <= 0) {
-    newAverageRating = 0;
-  }
+  // if (newReviewCount <= 0) {
+  //   newAverageRating = 0;
+  // }
 
-  // console.log('newAverageRating-2', newAverageRating);
+  // // console.log('newAverageRating-2', newAverageRating);
 
-  const updateRatings = await Business.findByIdAndUpdate(
-    business._id,
-    {
-      reviewCount: newReviewCount,
-      ratings: newAverageRating,
-    },
-    { new: true },
-  );
+  // const updateRatings = await Business.findByIdAndUpdate(
+  //   business._id,
+  //   {
+  //     reviewCount: newReviewCount,
+  //     ratings: newAverageRating,
+  //   },
+  //   { new: true },
+  // );
 
-  if (!updateRatings) {
-    throw new AppError(500, 'Failed to update Business Ratings!');
-  }
+  // if (!updateRatings) {
+  //   throw new AppError(500, 'Failed to update Business Ratings!');
+  // }
 
-  return result;
+  // return result;
 };
 
 export const reviewService = {
