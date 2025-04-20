@@ -31,17 +31,17 @@ const userCreateVarification = catchAsync(async (req, res) => {
   });
 });
 
-const userSwichRole = catchAsync(async (req, res) => {
-  const { userId } = req.user;
-  const newUser = await userService.userSwichRoleService(userId);
+// const userSwichRole = catchAsync(async (req, res) => {
+//   const { userId } = req.user;
+//   const newUser = await userService.userSwichRoleService(userId);
 
-  return sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: 'Swich role successfully',
-    data: newUser,
-  });
-});
+//   return sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: 'Swich role successfully',
+//     data: newUser,
+//   });
+// });
 
 // rest >...............
 
@@ -150,7 +150,7 @@ const deleteMyAccount = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
   createUser,
   userCreateVarification,
-  userSwichRole,
+  // userSwichRole,
   getUserById,
   getMyProfile,
   updateMyProfile,

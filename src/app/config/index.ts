@@ -37,5 +37,6 @@ export default {
   aws,
   stripe,
   googleApiKey: process.env.GOOGLEAPI,
+  shipment_key: process.env.SHIPMENT_KEY,
   // user_jwt_token: process.env.USER_JWT_TOKEN,
 };

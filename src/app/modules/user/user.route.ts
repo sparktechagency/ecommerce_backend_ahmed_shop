@@ -22,16 +22,15 @@ userRoutes
     validateRequest(resentOtpValidations.verifyOtpZodSchema),
     userController.userCreateVarification,
   )
-  .post(
-    '/swich-role',
-    auth(USER_ROLE.CUSTOMER, USER_ROLE.BUSINESS),
-    userController.userSwichRole,
-  )
+  // .post(
+  //   '/swich-role',
+  //   auth(USER_ROLE.CUSTOMER, USER_ROLE.BUSINESS),
+  //   userController.userSwichRole,
+  // )
   .get(
     '/my-profile',
     auth(
-      USER_ROLE.CUSTOMER,
-      USER_ROLE.BUSINESS,
+      USER_ROLE.USER,
       USER_ROLE.ADMIN,
       USER_ROLE.SUB_ADMIN,
       USER_ROLE.SUPER_ADMIN,
@@ -46,8 +45,7 @@ userRoutes
   .patch(
     '/update-my-profile',
     auth(
-      USER_ROLE.BUSINESS,
-      USER_ROLE.CUSTOMER,
+      USER_ROLE.USER,
       USER_ROLE.ADMIN,
       USER_ROLE.SUB_ADMIN,
       USER_ROLE.SUPER_ADMIN,
@@ -59,8 +57,7 @@ userRoutes
   .delete(
     '/delete-my-account',
     auth(
-      USER_ROLE.BUSINESS,
-      USER_ROLE.CUSTOMER,
+      USER_ROLE.USER,
       USER_ROLE.ADMIN,
       USER_ROLE.SUB_ADMIN,
       USER_ROLE.SUPER_ADMIN,

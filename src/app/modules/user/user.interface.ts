@@ -15,18 +15,9 @@ export interface TUserCreate {
   email: string;
   password: string;
   phone: string;
-  dateOfBirth: Date;
   role: (typeof USER_ROLE)[keyof typeof USER_ROLE];
   address: string;
-  pegnensi: boolean;
-  allergies: boolean;
-  asRole: string;
-  aleargiesDetails: string;
-  postalCode: string;
-  addressLine1: string;
-  addressLine2: string;
-  townCity: string;
-  country: string;
+  
 }
 
 export interface TUser extends TUserCreate {

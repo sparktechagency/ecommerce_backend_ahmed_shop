@@ -10,17 +10,13 @@ const reviewRouter = express.Router();
 reviewRouter
   .post(
     '/',
-    auth(USER_ROLE.CUSTOMER),
+    auth(USER_ROLE.USER),
     // validateRequest(videoValidation.VideoSchema),
     reviewController.createReview,
   )
   .get('/', reviewController.getReviewByCustomer)
   .get('/:id', reviewController.getSingleReview)
-  .patch('/:id', auth(USER_ROLE.CUSTOMER), reviewController.updateSingleReview)
-  .delete(
-    '/:id',
-    auth(USER_ROLE.CUSTOMER),
-    reviewController.deleteSingleReview,
-  );
+  .patch('/:id', auth(USER_ROLE.USER), reviewController.updateSingleReview)
+  .delete('/:id', auth(USER_ROLE.USER), reviewController.deleteSingleReview);
 
 export default reviewRouter;
