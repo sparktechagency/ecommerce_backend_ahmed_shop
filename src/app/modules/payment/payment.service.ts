@@ -111,6 +111,12 @@ const addPaymentService = async (payload: any) => {
       0,
     );
     newPayload.totalAmount = totalAmount;
+    
+    if (!payload.shippingCost) {
+      throw new AppError(400, 'Shipping cost is required!');
+    } else {
+      payload.shippingCost = Number(payload.shippingCost);
+    }
 
     console.log('newPayload with totalAmount==', newPayload);
 
@@ -120,13 +126,15 @@ const addPaymentService = async (payload: any) => {
       throw new AppError(400, 'Failed to create order!');
     }
 
+
+
     const paymentInfo = {
       orderId: order[0]._id,
-      amount: order[0].totalAmount,
+      amount: order[0].totalAmount + payload.shippingCost,
       cartIds: payload.cartIds,
     };
 
-    // console.log('======stripe payment');
+    console.log('======stripe payment', paymentInfo);
     const checkoutResult: any = await createCheckout(
       payload.userId,
       paymentInfo,

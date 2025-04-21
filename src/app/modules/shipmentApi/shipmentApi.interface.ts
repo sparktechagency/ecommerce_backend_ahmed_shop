@@ -1,5 +1,9 @@
 
 export type TShipmentApi = {
-    bookingId: string;
-    
-}
+  shippingbookingId: string;
+};
+
+
+export type TShipmentRequestApi = {
+  shipmentRequestId: string;
+};

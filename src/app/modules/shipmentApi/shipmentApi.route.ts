@@ -11,6 +11,12 @@ shippingRouter
     shippingController.createShipping,
   )
   .post(
+    '/create-shipping-request/:id',
+    // auth(USER_ROLE.USER),
+    // validateRequest(videoValidation.VideoSchema),
+    shippingController.createShippingRequest,
+  )
+  .post(
     '/rates',
     // auth(USER_ROLE.USER),
     // validateRequest(videoValidation.VideoSchema),

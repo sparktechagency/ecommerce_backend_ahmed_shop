@@ -17,6 +17,20 @@ const createShipping = catchAsync(async (req, res) => {
 });
 
 
+const createShippingRequest = catchAsync(async (req, res) => {
+  const id = req.params.id;
+  const result = await shippingService.createShippingRequestService(id);
+
+  // Send response
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Shipping Request Create SuccessFull!',
+    data: result,
+  });
+});
+
+
 const createShippingRates = catchAsync(async (req, res) => {
   const shippingData = req.body;
   const result = await shippingService.createShippingRatesService(shippingData);
@@ -31,7 +45,8 @@ const createShippingRates = catchAsync(async (req, res) => {
 });
 
 const getAllShipping = catchAsync(async (req, res) => {
-  const result = await shippingService.getAllBookingShippingQuery();
+  const data = req.body;
+  const result = await shippingService.getAllBookingShippingQuery(data);
 
   sendResponse(res, {
     success: true,
@@ -68,6 +83,7 @@ const deleteSingleShipping = catchAsync(async (req, res) => {
 
 export const shippingController = {
   createShipping,
+  createShippingRequest,
   createShippingRates,
   getAllShipping,
   getSingleShipping,

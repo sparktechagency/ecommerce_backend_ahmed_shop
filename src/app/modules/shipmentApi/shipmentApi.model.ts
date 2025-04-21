@@ -1,11 +1,25 @@
 import { model, Schema } from "mongoose";
-import { TShipmentApi } from "./shipmentApi.interface";
+import { TShipmentApi, TShipmentRequestApi } from "./shipmentApi.interface";
 
 const shipmentApiSchema = new Schema<TShipmentApi>({
-    bookingId: { type: String, required: true }
+    shippingbookingId: { type: String, required: true }
   });
 
 
 
 const ShipmentApi = model<TShipmentApi>('ShipmentApi', shipmentApiSchema);
-export default ShipmentApi;
+// export default ShipmentApi;
+
+
+const shipmentRequestSchema = new Schema<TShipmentRequestApi>({
+  shipmentRequestId: { type: String, required: true },
+});
+
+
+
+const ShipmentRequestApi = model<TShipmentRequestApi>(
+  'ShipmentRequestApi',
+  shipmentRequestSchema,
+);
+// export default ShipmentRequestApi;
+export  { ShipmentApi, ShipmentRequestApi} ;

@@ -25,7 +25,9 @@ export const wearewuunderApiRequest = async (
       data: method.toUpperCase() === 'GET' ? null : data,
     });
 
-    return response.data;
+    console.log('response==', response);
+
+    return {data:response.data, status:response.status};
   } catch (error: any) {
     if (error.response) {
       console.error('Error Response:', {
