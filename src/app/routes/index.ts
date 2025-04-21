@@ -18,6 +18,7 @@ import howMadeRouter from '../modules/howMade/howMade.route';
 import faqRouter from '../modules/faq/faq.route';
 import cartRouter from '../modules/cart/cart.route';
 import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
+import pickupAddressRouter from '../modules/pickupAddress/pickupAddress.route';
 
 const router = Router();
 
@@ -95,6 +96,10 @@ const moduleRoutes = [
   {
     path: '/shipping',
     route: shippingRouter,
+  },
+  {
+    path: '/pickup-address',
+    route: pickupAddressRouter,
   },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

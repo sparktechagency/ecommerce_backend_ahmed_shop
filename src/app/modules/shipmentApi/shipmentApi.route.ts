@@ -23,6 +23,7 @@ shippingRouter
     shippingController.createShippingRates,
   )
   .get('/', shippingController.getAllShipping)
+  .get('/request', shippingController.getAllShippingRequest)
   .get('/:id', shippingController.getSingleShipping)
   .delete('/:id', shippingController.deleteSingleShipping);
 

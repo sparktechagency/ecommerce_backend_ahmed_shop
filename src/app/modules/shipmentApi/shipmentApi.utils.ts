@@ -32,11 +32,13 @@ export const wearewuunderApiRequest = async (
     if (error.response) {
       console.error('Error Response:', {
         status: error.response.status,
-        data: error.response.data,
+        data: error.response.data.errors,
         headers: error.response.headers,
         url: url,
         method: method,
+        errors: error.response.data.errors,
       });
+
 
       if (error.response.status === 401) {
         throw new AppError(401, 'Unauthorized');

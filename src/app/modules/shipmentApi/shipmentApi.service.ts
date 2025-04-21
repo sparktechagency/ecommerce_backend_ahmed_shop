@@ -11,7 +11,7 @@ import Cart from '../cart/cart.model';
 import Product from '../product/product.model';
 import { Order } from '../orders/orders.model';
 import { User } from '../user/user.models';
-import { ShipmentApi } from './shipmentApi.model';
+import { ShipmentApi, ShipmentRequestApi } from './shipmentApi.model';
 // import Business from '../business/business.model';
 
 // const apiKey = '7EyVLQIcx2Ul6FISHTba0Mr96geTdP6';
@@ -67,7 +67,6 @@ const createShippingService = async (payload: any) => {
     pickup_date: '2019-08-24T14:15:22Z', // ISO 8601 format, UTC
     pickup_address: {
       zip_code: '6003 DD',
-      vat: 'NL8559.62.100',
       street_name: 'Marconilaan',
       state_code: 'FL',
       phone_number: '+31683243251',
@@ -75,7 +74,6 @@ const createShippingService = async (payload: any) => {
       house_number: '8',
       given_name: 'First name',
       family_name: 'Last name',
-      eori_number: 'NL8559.62.100',
       email_address: 'info@examplebusiness.com',
       country: 'NL',
       business: 'Example Business Ltd.',
@@ -144,10 +142,17 @@ const createShippingRequestService = async (id: any) => {
   }
 
   const singleBooking = await wearewuunderApiRequest(`bookings/${id}`, 'GET');
-  console.log('singleBooking-----', singleBooking);
 
   if (singleBooking.status === 200) {
     const data = singleBooking.data;
+
+    if (!data.width || data.width <= 0) {
+      throw new AppError(400, 'Width must be greater than 0');
+    }
+
+    if (!data.customer_reference) {
+      throw new AppError(400, "Customer reference can't be blank");
+    }
     // console.log('data===', data);
     const orderItems = data.order_lines.map((item: any) => {
       return {
@@ -163,6 +168,7 @@ const createShippingRequestService = async (id: any) => {
     const shipmentRequestData = {
       width: data.width, // in centimeters
       // pickup_date: '2019-08-24T14:15:22Z', // ISO 8601 format, UTC
+      preferred_service_level: 'any:most_efficient',
       pickup_address: {
         zip_code: '6003 DD',
         vat: 'NL8559.62.100',
@@ -179,7 +185,7 @@ const createShippingRequestService = async (id: any) => {
         business: 'Example Business Ltd.',
         address2: 'Appartment 4D',
       },
-      // personal_message: 'A very personal message',
+      personal_message: 'A very personal message',
       // parcelshop_id: 'POST_NL:1234',
       order_lines: orderItems,
       meta: {},
@@ -203,10 +209,79 @@ const createShippingRequestService = async (id: any) => {
         business: data.delivery_address.business,
         address2: data.delivery_address.address2,
       },
+      delivery_instructions: 'delivery instructions',
       customer_reference: data.customer_reference,
     };
 
     console.log('shipmentRequestData===========', shipmentRequestData);
+
+    // const requestData = {
+    //   width: 30,
+    //   weight: 1000,
+    //   webhook_url: 'string',
+    //   value: 40000,
+    //   request_pickup: true,
+    //   preferred_service_level: 'post_nl:cheapest',
+    //   picture: 'string',
+    //   pickup_address: {
+    //     zip_code: '6003 DD',
+    //     vat: 'NL8559.62.100',
+    //     street_name: 'Marconilaan',
+    //     state_code: 'FL',
+    //     phone_number: '+31683243251',
+    //     locality: 'Weert',
+    //     house_number: '8',
+    //     given_name: 'First name',
+    //     family_name: 'Last name',
+    //     eori_number: 'NL8559.62.100',
+    //     email_address: 'info@examplebusiness.com',
+    //     country: 'NL',
+    //     business: 'Example Business Ltd.',
+    //     address2: 'Appartment 4D',
+    //   },
+    //   personal_message: 'A very personal message',
+    //   parcelshop_id: 'POST_NL:1234',
+    //   ordered_at: '2024-04-11T16:44:21.013152',
+    //   order_lines: [
+    //     {
+    //       weight: 1000,
+    //       value: '5.99',
+    //       sku: '54321',
+    //       quantity: 1,
+    //       hs_code: '1234567890',
+    //       ean: '12345',
+    //       description: 'string',
+    //       country_of_origin: 'NL',
+    //     },
+    //   ],
+    //   number_of_items: 1,
+    //   meta: {},
+    //   length: 40,
+    //   kind: 'package',
+    //   is_return: false,
+    //   incoterms: 'DDP',
+    //   height: 20,
+    //   drop_off: false,
+    //   description: '1x API documentation',
+    //   delivery_address: {
+    //     zip_code: '6003 DD',
+    //     vat: 'NL8559.62.100',
+    //     street_name: 'Marconilaan',
+    //     state_code: 'FL',
+    //     phone_number: '+31683243251',
+    //     locality: 'Weert',
+    //     house_number: '8',
+    //     given_name: 'First name',
+    //     family_name: 'Last name',
+    //     eori_number: 'NL8559.62.100',
+    //     email_address: 'info@examplebusiness.com',
+    //     country: 'NL',
+    //     business: 'Example Business Ltd.',
+    //     address2: 'Appartment 4D',
+    //   },
+    //   deliver_by: '2023-02-29',
+    //   customer_reference: 'W202301',
+    // };
 
     const shipmentRequestBooking = await wearewuunderApiRequest(
       'shipments',
@@ -216,46 +291,54 @@ const createShippingRequestService = async (id: any) => {
 
     console.log('shipmentRequestBooking==*****', shipmentRequestBooking);
 
+    if (shipmentRequestBooking.status === 201) {
+      const data = {
+        shipmentRequestId: shipmentRequestBooking.data.id,
+      };
 
+      const shipingApi = await ShipmentRequestApi.create(data);
+
+      if (!shipingApi) {
+        throw new AppError(400, 'ShipmentRequestApi creqate failed!');
+      }
+    }
+
+      return shipmentRequestBooking.data;
   }
 
-  // console.log('singleBooking==', singleBooking);
-
-  // calculateShippingBox(order.productList)
-  //   .then((heightAndWidth) => {
-  //     console.log('heightAndWidth==', heightAndWidth);
-  //   })
-  //   .catch((err) => {
-  //     console.error('Error calculating shipping box:', err);
-  //   });
-
-  // const url = 'https://api.wearewuunder.com/api/v2/bookings';
-
-  
-
-
-  // const shipingBooking = await wearewuunderApiRequest(
-  //   'bookings',
-  //   'POST',
-  //   shippingData,
-  // );
-
-
-  // if (shipingBooking.status === 201) {
-  //   const data = {
-  //     shippingbookingId: shipingBooking.data.id,
-  //   };
-
-  //   const shipingApi = await ShipmentApi.create(data);
-
-  //   if (!shipingApi) {
-  //     throw new AppError(400, 'ShipmentApi creqate failed!');
-  //   }
-  // }
-
-  // return shipingBooking;
-  return " ";
 };
+
+const getAllBookingShippingRequestQuery = async (data: any) => {
+  if (!data.ids || data.ids.length === 0) {
+    throw new AppError(403, 'Invalid input parameters: No IDs provided');
+  }
+
+  const allIds = await ShipmentRequestApi.find();
+  const invalidIds = data.ids.filter(
+    (id: any) =>
+      !allIds.some((shipment) => shipment.shipmentRequestId.toString() === id),
+  );
+
+  if (invalidIds.length > 0) {
+    throw new AppError(
+      403,
+      `Invalid input parameters: The following IDs do not exist: ${invalidIds.join(', ')}`,
+    );
+  }
+
+  const bookingPromises = data.ids.map(async (id: any) => {
+    const singleBooking = await wearewuunderApiRequest(
+      `shipments/${id}`,
+      'GET',
+    );
+    return singleBooking.data;
+  });
+
+  const allBookingsRequest = await Promise.all(bookingPromises);
+
+  return allBookingsRequest;
+};
+
 
 const createShippingRatesService = async (payload: any) => {
   const productItems = await Promise.all(
@@ -319,7 +402,6 @@ const createShippingRatesService = async (payload: any) => {
     // pickup_date: '2019-08-24T14:15:22Z', // ISO 8601 format, UTC
     pickup_address: {
       zip_code: '6003 DD',
-      vat: 'NL8559.62.100',
       street_name: 'Marconilaan',
       state_code: 'FL',
       phone_number: '+31683243251',
@@ -375,6 +457,8 @@ const createShippingRatesService = async (payload: any) => {
 
   return shipingRates.data.rates;
 };
+
+
 
 const getAllBookingShippingQuery = async (data:any) => {
 
@@ -454,6 +538,7 @@ export const shippingService = {
   createShippingRequestService,
   createShippingRatesService,
   getAllBookingShippingQuery,
+  getAllBookingShippingRequestQuery,
   getSingleShippingQuery,
   deletedShippingQuery,
 };

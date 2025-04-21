@@ -57,6 +57,20 @@ const getAllShipping = catchAsync(async (req, res) => {
   });
 });
 
+
+const getAllShippingRequest = catchAsync(async (req, res) => {
+  const data = req.body;
+  const result = await shippingService.getAllBookingShippingRequestQuery(data);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    // meta: meta,
+    data: result,
+    message: ' All Shipping Request are requered successful!!',
+  });
+});
+
 const getSingleShipping = catchAsync(async (req, res) => {
   const result = await shippingService.getSingleShippingQuery(req.params.id);
 
@@ -86,6 +100,7 @@ export const shippingController = {
   createShippingRequest,
   createShippingRates,
   getAllShipping,
+  getAllShippingRequest,
   getSingleShipping,
   deleteSingleShipping,
 };
