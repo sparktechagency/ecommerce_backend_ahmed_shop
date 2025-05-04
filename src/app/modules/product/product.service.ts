@@ -7,6 +7,7 @@ import FavoriteProduct from '../favorite/favorite.model';
 import { access } from 'fs/promises';
 import { unlink } from 'fs/promises';
 import { Category } from '../category/category.model';
+import Offer from '../offer/offer.model';
 // import PickupAddress from '../pickupAddress/pickupAddress.model';
 
 
@@ -64,7 +65,7 @@ const createProductService = async (payload: TProduct) => {
 const getAllProductQuery = async (query: Record<string, unknown>) => {
   console.log('query==', query);
   const productQuery = new QueryBuilder(
-    Product.find({ isDeleted: false }),
+    Product.find({ isDeleted: false }).populate('sellerId'),
     query,
   )
     .search(['name', 'details'])
@@ -75,8 +76,27 @@ const getAllProductQuery = async (query: Record<string, unknown>) => {
 
   const result = await productQuery.modelQuery;
 
+const isOfferByProduct = await Offer.find({
+  endDate: { $gte: new Date() },
+});
+  const offerProductList = await Promise.all(
+    result.map(async (product: any) => {
+      const offer = isOfferByProduct.find(
+        (offer) => offer.productId.equals(product._id),
+      )
+       let populatedProduct:any = await Product.findById(product._id).populate('sellerId').exec();
+  
+      if (offer) {
+        populatedProduct.isOffer = offer; 
+      } else {
+        populatedProduct.isOffer = false;
+      }
+        return populatedProduct;
+    })
+  )
+
   const meta = await productQuery.countTotal();
-  return { meta, result };
+  return { meta, result: offerProductList };
 };
 
 
@@ -96,8 +116,27 @@ const getAllProductBySellerQuery = async (query: Record<string, unknown>, userId
 
   const result = await productQuery.modelQuery;
 
+  const isOfferByProduct = await Offer.find({
+    endDate: { $gte: new Date() },
+  });
+  const offerProductList = await Promise.all(
+    result.map(async (product: any) => {
+      const offer = isOfferByProduct.find((offer) =>
+        offer.productId.equals(product._id),
+      );
+      let populatedProduct: any = await Product.findById(product._id).populate('sellerId').exec();
+
+      if (offer) {
+        populatedProduct.isOffer = offer;
+      } else {
+        populatedProduct.isOffer = false;
+      }
+      return populatedProduct;
+    }),
+  );
+
   const meta = await productQuery.countTotal();
-  return { meta, result };
+  return { meta, result: offerProductList };
 };
 
 const getSingleProductQuery = async (id: string, userId:string) => {
@@ -108,29 +147,41 @@ const getSingleProductQuery = async (id: string, userId:string) => {
     throw new AppError(404, 'Product Not Found!!');
   }
 
-  console.log('product==', product._id);
   const favoriteProducts = await FavoriteProduct.find({userId});
 
   const isFavoriteProduct = favoriteProducts.find(
     (favorite) => favorite.productId.equals(product._id),
   );
 
-    console.log('favoriteProducts=', favoriteProducts);
-
-  console.log('isFavoriteProduct==', isFavoriteProduct);
-
   const updateData = {
     ...product._doc,
     isFavorite: isFavoriteProduct ? true : false
   };
 
+  const isOfferByProduct = await Offer.find({
+    endDate: { $gte: new Date() },
+  });
+  const offer = isOfferByProduct.find(
+    (offer) => offer.productId.equals(product._id),
+  );
+  if (offer) {
+    updateData.isOffer = offer;
+  }
+
   return updateData;
 };
 
-const updateSingleProductQuery = async (id: string, payload:any) => {
+const updateSingleProductQuery = async (id: string, payload:any, userId:string) => {
   const product: any = await Product.findById(id);
   if (!product) {
     throw new AppError(404, 'Product Not Found!!');
+  }
+
+  if (product.sellerId.toString() !== userId.toString()) {
+    throw new AppError(
+      404,
+      'You are not valid Seller for deleted this product!!',
+    );
   }
 
   const { remainingUrl, ...rest } = payload;
@@ -149,8 +200,8 @@ const updateSingleProductQuery = async (id: string, payload:any) => {
   const oldImages = product.images || []; 
 console.log('oldImages', oldImages);
 console.log('remainingUrl', remainingUrl);
-  const result = await Product.findByIdAndUpdate(
-    id,
+  const result = await Product.findOneAndUpdate(
+    {_id:id, sellerId:userId},
     { ...rest },
     { new: true },
   );
@@ -181,20 +232,28 @@ console.log('remainingUrl', remainingUrl);
   return result;
 };
 
-const deletedProductQuery = async (id: string) => {
+const deletedProductQuery = async (id: string, userId: string) => {
   if (!id) {
     throw new AppError(400, 'Invalid input parameters');
   }
+   const user = await Product.findById(userId);
+   if (!user) {
+     throw new AppError(404, 'User Not Found!!');
+   }
   const product = await Product.findById(id);
   if (!product) {
     throw new AppError(404, 'Product Not Found!!');
   }
+ 
   if (product.isDeleted) {
     throw new AppError(404, 'Product already deleted !!');
   }
+  if (product.sellerId.toString() !== userId.toString()) {
+    throw new AppError(404, 'You are not valid Seller for deleted this product!!');
+  }
 
-  const result = await Product.findByIdAndUpdate(
-    id, 
+  const result = await Product.findOneAndUpdate(
+    {_id: id, sellerId: userId}, 
     { isDeleted: true }, 
     { new: true }, 
   );

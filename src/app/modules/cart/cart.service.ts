@@ -1,5 +1,6 @@
 import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../error/AppError';
+import Offer from '../offer/offer.model';
 import Product from '../product/product.model';
 import { User } from '../user/user.models';
 import { TCart } from './cart.interface';
@@ -10,17 +11,35 @@ const createCartService = async (payload: TCart) => {
   if (!isProductExist) {
     throw new AppError(400, 'Product is not Found!!');
   }
+  
+  payload.weight = Number(isProductExist.weight); 
+  payload.sellerId = isProductExist.sellerId;
 
-  payload.price = Number(isProductExist.price); 
+  const isOfferExist = await Offer.findOne({
+    productId: payload.productId,
+    endDate: { $gte: new Date() },
+  });
 
-  const isUserExist = await User.findById(payload.userId);
+   if (isOfferExist) {
+     const offerPercentage = Number(isOfferExist.offer);
+     payload.price = Number(isProductExist.price) * (1 - offerPercentage / 100);
+     payload.offer = offerPercentage; 
+   } else {
+     payload.price = Number(isProductExist.price);
+     payload.offer = 0; 
+   }
+
+  const isUserExist = await User.findById(payload.customerId);
   if (!isUserExist) {
     throw new AppError(400, 'User is not Found!!');
   }
 
-  const isExistCartProduct = await Cart.findOne({productId:payload.productId, userId:payload.userId});
+  const isExistCartProduct = await Cart.findOne({
+    productId: payload.productId,
+    userId: payload.customerId,
+  });
     if (isExistCartProduct) {
-      throw new AppError(400, 'This Product is already Exist!!');
+      throw new AppError(400, 'Product is already Exist. Please check cart page!!');
     }
 
   const result = await Cart.create(payload);
@@ -30,10 +49,13 @@ const createCartService = async (payload: TCart) => {
 
 const getAllCartQuery = async (
   query: Record<string, unknown>,
-  userId: string,
+  customerId: string,
 ) => {
   const favoriteProductQuery = new QueryBuilder(
-    Cart.find({ userId }).populate({path:'productId', select:"name images"}),
+    Cart.find({ customerId }).populate({
+      path: 'productId',
+      select: 'name images',
+    }),
     query,
   )
     .search([''])
@@ -75,19 +97,21 @@ const singleCartProductQuantityUpdateQuery = async (
   console.log('quantityChange==', quantityChange);
 
     const newQuantity = cartProduct.quantity + quantityChange;
+     const newTotalPrice = newQuantity * product.price;
+     const newTotalWeight = newQuantity * product.weight;
   // console.log('newQuantity==', newQuantity);
-  //  const newTotalPrice = newQuantity * product.price;
   // console.log('newTotalPrice==', newTotalPrice);
 
   if(product.availableStock < newQuantity) {
-    throw new AppError(400, 'Product is out of stock');
+    throw new AppError(400, 'Product is out of stock!!');
   }
 
   const result = await Cart.findByIdAndUpdate(
     id,
     {
       quantity: newQuantity,
-      // price: newTotalPrice,
+      price: newTotalPrice,
+      weight: newTotalWeight
     },
     { new: true },
   );
@@ -97,12 +121,15 @@ const singleCartProductQuantityUpdateQuery = async (
   return result;
 };
 
-const deletedCartQuery = async (id: string) => {
+const deletedCartQuery = async (id: string, customerId: string) => {
   const cart = await Cart.findById(id);
   if (!cart) {
     throw new AppError(404, 'Cart Not Found !');
   }
-  const result = await Cart.findByIdAndDelete(id);
+  if (cart.customerId.toString() !== customerId.toString())  {
+    throw new AppError(404, 'you are not valid Customer for deleted this cart!!');
+  }
+  const result = await Cart.findOneAndDelete({_id:id, customerId:customerId});
   if (!result) {
     throw new AppError(404, 'Cart Not Found or Unauthorized Access!');
   }

@@ -89,6 +89,7 @@ const getSingleProduct = catchAsync(async (req, res) => {
 
 const updateSingleProduct = catchAsync(async (req, res) => {
     const {id} = req.params;
+    const {userId} = req.user;
     const updateData = req.body;
       let remainingUrl = updateData?.remainingUrl || null;
     const imageFiles = req.files as {
@@ -114,7 +115,9 @@ const updateSingleProduct = catchAsync(async (req, res) => {
      updateData.price = Number(updateData.price);
      updateData.availableStock = Number(updateData.availableStock);
 
-  const result = await productService.updateSingleProductQuery(id, updateData);
+     console.log('updateData', updateData);
+
+  const result = await productService.updateSingleProductQuery(id, updateData, userId);
 
   sendResponse(res, {
     success: true,
@@ -125,7 +128,8 @@ const updateSingleProduct = catchAsync(async (req, res) => {
 });
 
 const deleteSingleProduct = catchAsync(async (req, res) => {
-  const result = await productService.deletedProductQuery(req.params.id);
+  const {userId} = req.user;
+  const result = await productService.deletedProductQuery(req.params.id, userId);
 
   sendResponse(res, {
     success: true,
