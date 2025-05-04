@@ -1,19 +1,24 @@
+import { Types } from "mongoose";
 
 export  type TProduct = {
+  sellerId: Types.ObjectId;
+  categoryId: Types.ObjectId;
+  categoryName: string;
   name: string;
   details: string;
   price: Number;
   stock: Number;
   availableStock: Number;
-  commonName: string;
-  scientificName: string;
-  type: string;
-  diet: string;
-  groupName: string;
-  size: string;
-  weight: string;
   images: [string];
-  height: string;
-  width: string;
-  isDeleted:boolean;
+  weight: string;
+  // commonName: string;
+  // scientificName: string;
+  // type: string;
+  // diet: string;
+  // groupName: string;
+  // size: string;
+  // weight: string;
+  // height: string;
+  // width: string;
+  isDeleted: boolean;
 };

@@ -6,37 +6,43 @@ import { TProduct } from './product.interface';
 import FavoriteProduct from '../favorite/favorite.model';
 import { access } from 'fs/promises';
 import { unlink } from 'fs/promises';
+import { Category } from '../category/category.model';
+// import PickupAddress from '../pickupAddress/pickupAddress.model';
 
 
 const createProductService = async (payload: TProduct) => {
+
+  // const isPickupAddressExist = await PickupAddress.findOne({});
+
+  // if (!isPickupAddressExist) {  
+  //   throw new AppError(400, 'Pickup Address is not Found!!');
+  // }
+
+
+
+  const categoryExist = await Category.findOne({
+    _id: payload.categoryId,
+    isActive: true,
+  });
+  if (!categoryExist) {
+    throw new AppError(400, 'Category is not Found!!');
+  }
+
+  payload.categoryName = categoryExist.name;
   
   const result = await Product.create(payload);
 
-    // if (!result) {
-    //   const imagePath = `public/${payload.images}`;
-
-    //   try {
-    //     await access(imagePath); // Check if the file exists
-
-    //     await unlink(imagePath);
-    //   } catch (error: any) {
-    //     console.error(`Error handling file at ${imagePath}:`, error.message);
-    //   }
-    // }
-
+  
     if (!result) {
       const imagePaths = payload.images.map(
         (image: string) => `public/${image}`,
       );
 
       try {
-        // Loop through each image and attempt to delete it
         await Promise.all(
           imagePaths.map(async (imagePath) => {
             try {
-              // Check if the file exists
               await access(imagePath);
-              // If the file exists, delete it
               await unlink(imagePath);
             } catch (error: any) {
               console.error(
@@ -57,35 +63,31 @@ const createProductService = async (payload: TProduct) => {
 
 const getAllProductQuery = async (query: Record<string, unknown>) => {
   console.log('query==', query);
+  const productQuery = new QueryBuilder(
+    Product.find({ isDeleted: false }),
+    query,
+  )
+    .search(['name', 'details'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await productQuery.modelQuery;
+
+  const meta = await productQuery.countTotal();
+  return { meta, result };
+};
 
 
-   let newQuery: any = {};
+const getAllProductBySellerQuery = async (query: Record<string, unknown>, userId: string) => {
+  console.log('query==', query);
 
-   if (
-     query.minPrice &&
-     query.maxPrice &&
-     query.minPrice !== '' &&
-     query.maxPrice !== '' &&
-     query.maxPrice !== null &&
-     query.minPrice !== null
-   ) {
-     const price = {
-       $gte: Number(query.minPrice),
-       $lte: Number(query.maxPrice),
-     };
-
-     delete query.minPrice;
-     delete query.maxPrice;
-     newQuery = { ...query, price };
-   } else {
-     newQuery = { ...query };
-   }
-
-   console.log('newQuery filter', newQuery);
-   console.log('query filter', query);
-
-
-  const productQuery = new QueryBuilder(Product.find({ isDeleted:false }), newQuery)
+ 
+  const productQuery = new QueryBuilder(
+    Product.find({ isDeleted: false, sellerId:userId }),
+    query,
+  )
     .search(['name', 'details'])
     .filter()
     .sort()
@@ -207,6 +209,7 @@ const deletedProductQuery = async (id: string) => {
 export const productService = {
   createProductService,
   getAllProductQuery,
+  getAllProductBySellerQuery,
   getSingleProductQuery,
   updateSingleProductQuery,
   deletedProductQuery,

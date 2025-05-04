@@ -8,7 +8,7 @@ const pickupAddressRouter = express.Router();
 pickupAddressRouter
   .post(
     '/create-pickup-address',
-    auth(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
+    // auth(USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN),
     pickupAddressController.addPickupAddress,
   )
   .get('/', pickupAddressController.getPickupAddresss)

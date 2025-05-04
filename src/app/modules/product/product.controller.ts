@@ -6,26 +6,33 @@ import Product from './product.model';
 import AppError from '../../error/AppError';
 
 const createProduct = catchAsync(async (req, res) => {
+    const productData = req.body;
+  const {userId} = req.user;
+  productData.sellerId = userId;
 
   console.log('hit hoise');
-  const productData = req.body;
+
   const isExist = await Product.findOne({
     name: productData.name,
+    sellerId: productData.sellerId,
   });
   if (isExist) {
     throw new AppError(400, 'Product already exist !');
   }
-  productData.availableStock = productData.stock;
+  productData.availableStock = Number(productData.stock);
+  productData.stock =Number(productData.stock);
+  productData.price = Number(productData.price);
   const imageFiles = req.files as {
     [fieldname: string]: Express.Multer.File[];
   };
 
   
   if (imageFiles?.images && imageFiles.images.length > 0) {
-    productData.images = imageFiles.images.map((file) =>
-      file.path.replace(/^public[\\/]/, ''),
-    );
+    productData.images = imageFiles.images.map((file) => file.path.replace(/^public[\\/]/, ''))
+
   }
+
+  console.log('productData', productData);
 
 
   const result = await productService.createProductService(productData);
@@ -41,6 +48,23 @@ const createProduct = catchAsync(async (req, res) => {
 
 const getAllProduct = catchAsync(async (req, res) => {
   const { meta, result } = await productService.getAllProductQuery(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    meta: meta,
+    data: result,
+    message: ' All Product are requered successful!!',
+  });
+});
+
+
+const getAllProductBySeller = catchAsync(async (req, res) => {
+  const {userId} = req.user;
+  const { meta, result } = await productService.getAllProductBySellerQuery(
+    req.query,
+    userId,
+  );
 
   sendResponse(res, {
     success: true,
@@ -114,6 +138,7 @@ const deleteSingleProduct = catchAsync(async (req, res) => {
 export const productController = {
   createProduct,
   getAllProduct,
+  getAllProductBySeller,
   getSingleProduct,
   updateSingleProduct,
   deleteSingleProduct,

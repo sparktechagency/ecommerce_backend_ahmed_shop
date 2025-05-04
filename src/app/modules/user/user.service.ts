@@ -30,8 +30,7 @@ export interface OTPVerifyAndCreateUserProps {
 const createUserToken = async (payload: TUserCreate) => {
   const { role, email, fullName, password } = payload;
 
-  // user role check
-  if (!(role === USER_ROLE.USER )) {
+  if (!(role === USER_ROLE.SELLER || role === USER_ROLE.CUSTOMER)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User data is not valid !!');
   }
 
@@ -138,7 +137,7 @@ const otpVerifyAndCreateUser = async ({
     });
   });
 
-  if (!(role === USER_ROLE.USER )) {
+  if (!(role === USER_ROLE.SELLER || role === USER_ROLE.CUSTOMER)) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User data is not valid !!');
   }
 
@@ -351,7 +350,7 @@ const getAllUserQuery = async (query: Record<string, unknown>) => {
 const getAllUserCount = async () => {
   
   const allBusinessCount = await User.countDocuments({
-    role: USER_ROLE.USER,
+    role: USER_ROLE.CUSTOMER || USER_ROLE.SELLER,
   });
   const result = {
     allBusinessCount,
@@ -414,7 +413,7 @@ const getUserById = async (id: string) => {
 };
 
 const getUserByEmail = async (email: string) => {
-  const result = await User.findOne({ email });
+  const result = await User.findOne({ email , isDeleted: false });
 
   return result;
 };
@@ -434,36 +433,48 @@ const deleteMyAccount = async (id: string, payload: DeleteAccountPayload) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
   }
 
-  // const userDeleted = await User.findByIdAndUpdate(
-  //   id,
-  //   { isDeleted: true },
-  //   { new: true },
-  // );
+    const userDeleted = await User.findByIdAndUpdate(
+      id,
+      { isDeleted: true },
+      { new: true },
+    );
 
-  const userDeleted = await User.findByIdAndDelete(id);
+    const otpUpdate = await Otp.deleteOne({ sentTo: user.email });
 
-  const otpDelete = await Otp.deleteOne({ sentTo: user.email });
+    // const userDeleted = await User.findByIdAndDelete(id);
 
-  if (!otpDelete) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'user Otp deleted failed');
-  }
+    // const otpDelete = await Otp.deleteOne({ sentTo: user.email });
 
-  if (!userDeleted) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'user deleting failed');
-  }
+    // if (!otpDelete) {
+    //   throw new AppError(httpStatus.BAD_REQUEST, 'user Otp deleted failed');
+    // }
+
+    if (!userDeleted || !otpUpdate) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'user deleting failed');
+    }
+
+
 
   return userDeleted;
 };
 
 const blockedUser = async (id: string) => {
+  const existUser: TUser | null = await User.findById(id);
+
+  if (!existUser) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const blockUnblockSwich = existUser.isActive ? false : true;
+
   const user = await User.findByIdAndUpdate(
     id,
-    { isActive: false },
+    { isActive: blockUnblockSwich },
     { new: true },
   );
 
   if (!user) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'user deleting failed');
+    throw new AppError(httpStatus.BAD_REQUEST, 'user blocking failed');
   }
 
   return user;

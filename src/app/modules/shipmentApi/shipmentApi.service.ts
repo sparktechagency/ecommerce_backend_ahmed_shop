@@ -12,6 +12,7 @@ import Product from '../product/product.model';
 import { Order } from '../orders/orders.model';
 import { User } from '../user/user.models';
 import { ShipmentApi, ShipmentRequestApi } from './shipmentApi.model';
+import PickupAddress from '../pickupAddress/pickupAddress.model';
 // import Business from '../business/business.model';
 
 // const apiKey = '7EyVLQIcx2Ul6FISHTba0Mr96geTdP6';
@@ -25,6 +26,11 @@ const createShippingService = async (payload: any) => {
   const user = await User.findById(order.userId);
   if (!user) {
     throw new AppError(400, 'User is not found!');
+  }
+
+  const pickupAddress = await PickupAddress.findOne({});
+  if (!pickupAddress) {
+    throw new AppError(400, 'Pickup Address is not found!');  
   }
   const heightAndWidth = await calculateShippingBox(order.productList);
 
@@ -66,18 +72,18 @@ const createShippingService = async (payload: any) => {
     // picture: 'string',
     pickup_date: '2019-08-24T14:15:22Z', // ISO 8601 format, UTC
     pickup_address: {
-      zip_code: '6003 DD',
-      street_name: 'Marconilaan',
-      state_code: 'FL',
-      phone_number: '+31683243251',
-      locality: 'Weert',
-      house_number: '8',
-      given_name: 'First name',
-      family_name: 'Last name',
-      email_address: 'info@examplebusiness.com',
-      country: 'NL',
-      business: 'Example Business Ltd.',
-      address2: 'Appartment 4D',
+      zip_code: pickupAddress.zip_code,
+      street_name: pickupAddress.street_name,
+      state_code: pickupAddress.state_code,
+      phone_number: pickupAddress.phone_number,
+      locality: pickupAddress.locality,
+      house_number: pickupAddress.house_number,
+      given_name: pickupAddress.given_name,
+      family_name: pickupAddress.family_name,
+      email_address: pickupAddress.email_address,
+      country: pickupAddress.country,
+      business: pickupAddress.business,
+      address2: pickupAddress.address2,
     },
     // personal_message: 'A very personal message',
     // parcelshop_id: 'POST_NL:1234',
@@ -140,6 +146,10 @@ const createShippingRequestService = async (id: any) => {
   if (!shipingApiExist) {
     throw new AppError(400, 'ShipmentBooking id is not found!');
   }
+  const pickupAddress = await PickupAddress.findOne({});
+  if (!pickupAddress) {
+    throw new AppError(400, 'Pickup Address is not found!');
+  }
 
   const singleBooking = await wearewuunderApiRequest(`bookings/${id}`, 'GET');
 
@@ -170,20 +180,18 @@ const createShippingRequestService = async (id: any) => {
       // pickup_date: '2019-08-24T14:15:22Z', // ISO 8601 format, UTC
       preferred_service_level: 'any:most_efficient',
       pickup_address: {
-        zip_code: '6003 DD',
-        vat: 'NL8559.62.100',
-        street_name: 'Marconilaan',
-        state_code: 'FL',
-        phone_number: '+31683243251',
-        locality: 'Weert',
-        house_number: '8',
-        given_name: 'First name',
-        family_name: 'Last name',
-        eori_number: 'NL8559.62.100',
-        email_address: 'info@examplebusiness.com',
-        country: 'NL',
-        business: 'Example Business Ltd.',
-        address2: 'Appartment 4D',
+        zip_code: pickupAddress.zip_code,
+        street_name: pickupAddress.street_name,
+        state_code: pickupAddress.state_code,
+        phone_number: pickupAddress.phone_number,
+        locality: pickupAddress.locality,
+        house_number: pickupAddress.house_number,
+        given_name: pickupAddress.given_name,
+        family_name: pickupAddress.family_name,
+        email_address: pickupAddress.email_address,
+        country: pickupAddress.country,
+        business: pickupAddress.business,
+        address2: pickupAddress.address2,
       },
       personal_message: 'A very personal message',
       // parcelshop_id: 'POST_NL:1234',
@@ -312,6 +320,7 @@ const getAllBookingShippingRequestQuery = async (data: any) => {
   if (!data.ids || data.ids.length === 0) {
     throw new AppError(403, 'Invalid input parameters: No IDs provided');
   }
+ 
 
   const allIds = await ShipmentRequestApi.find();
   const invalidIds = data.ids.filter(
@@ -364,6 +373,11 @@ const createShippingRatesService = async (payload: any) => {
     }),
   );
 
+  const pickupAddress = await PickupAddress.findOne({});
+  if (!pickupAddress) {
+    throw new AppError(400, 'Pickup Address is not found!');
+  }
+
   const productList = await Promise.all(
     payload.cartIds.map(async (cartId: any) => {
       const cartProduct = await Cart.findById(cartId);
@@ -401,19 +415,18 @@ const createShippingRatesService = async (payload: any) => {
     // picture: 'string',
     // pickup_date: '2019-08-24T14:15:22Z', // ISO 8601 format, UTC
     pickup_address: {
-      zip_code: '6003 DD',
-      street_name: 'Marconilaan',
-      state_code: 'FL',
-      phone_number: '+31683243251',
-      locality: 'Weert',
-      house_number: '8',
-      given_name: 'First name',
-      family_name: 'Last name',
-      eori_number: 'NL8559.62.100',
-      email_address: 'info@examplebusiness.com',
-      country: 'NL',
-      business: 'Example Business Ltd.',
-      address2: 'Appartment 4D',
+      zip_code: pickupAddress.zip_code,
+      street_name: pickupAddress.street_name,
+      state_code: pickupAddress.state_code,
+      phone_number: pickupAddress.phone_number,
+      locality: pickupAddress.locality,
+      house_number: pickupAddress.house_number,
+      given_name: pickupAddress.given_name,
+      family_name: pickupAddress.family_name,
+      email_address: pickupAddress.email_address,
+      country: pickupAddress.country,
+      business: pickupAddress.business,
+      address2: pickupAddress.address2,
     },
     // personal_message: 'A very personal message',
     // parcelshop_id: 'POST_NL:1234',

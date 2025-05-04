@@ -30,7 +30,8 @@ userRoutes
   .get(
     '/my-profile',
     auth(
-      USER_ROLE.USER,
+      USER_ROLE.CUSTOMER,
+      USER_ROLE.SELLER,
       USER_ROLE.ADMIN,
       USER_ROLE.SUB_ADMIN,
       USER_ROLE.SUPER_ADMIN,
@@ -45,7 +46,8 @@ userRoutes
   .patch(
     '/update-my-profile',
     auth(
-      USER_ROLE.USER,
+      USER_ROLE.CUSTOMER,
+      USER_ROLE.SELLER,
       USER_ROLE.ADMIN,
       USER_ROLE.SUB_ADMIN,
       USER_ROLE.SUPER_ADMIN,
@@ -57,7 +59,8 @@ userRoutes
   .delete(
     '/delete-my-account',
     auth(
-      USER_ROLE.USER,
+      USER_ROLE.CUSTOMER,
+      USER_ROLE.SELLER,
       USER_ROLE.ADMIN,
       USER_ROLE.SUB_ADMIN,
       USER_ROLE.SUPER_ADMIN,

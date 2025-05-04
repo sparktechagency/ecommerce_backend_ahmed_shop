@@ -3,6 +3,7 @@ import AppError from '../../error/AppError';
 import httpStatus from 'http-status';
 import { TPickupAddress } from './pickupAddress.interface';
 import PickupAddress from './pickupAddress.model';
+import client from '../../utils/redis';
 
 const addPickupAddress = async (
   data: Partial<TPickupAddress>,
@@ -20,28 +21,35 @@ const addPickupAddress = async (
   }
 };
 
-const getPickaddPickupAddress = async (
-  title?: keyof TPickupAddress,
-): Promise<{ content?: string } | TPickupAddress | null> => {
-  const PickaddPickupAddress = await PickupAddress.findOne().select(title as string);
 
-  if (title) {
-    return { content: PickaddPickupAddress ? PickaddPickupAddress[title] : undefined }; // Check if PickaddPickupAddress exists
-  } else {
-    return PickaddPickupAddress;
-  }
+const getPickaddPickupAddress = async (
+) => {
+//   const cacheKey = 'pickup_address';
+//   const cachedResult = await client.get(cacheKey);
+
+//   if (cachedResult) {
+//     return JSON.parse(cachedResult);
+//   }
+  const result = await PickupAddress.findOne();
+//   await client.setEx(cacheKey, 60, JSON.stringify(result)); // Cache for 60 seconds
+
+  return result;
 };
 
-// Function to update PickaddPickupAddress without needing an ID
-const updatePickaddPickupAddress = async (
-  PickaddPickupAddressBody: Partial<TPickupAddress>,
-): Promise<TPickupAddress | null> => {
-  // Find the existing PickaddPickupAddress document and update it
-  const PickaddPickupAddress = await PickupAddress.findOneAndUpdate({}, PickaddPickupAddressBody, {
-    new: true,
-  });
 
-  return PickaddPickupAddress;
+
+const updatePickaddPickupAddress = async (
+  payload:any
+)=> {
+  const result = await PickupAddress.findOneAndUpdate(
+    {},
+    payload,
+    {
+      new: true,
+    },
+  );
+
+  return result;
 };
 
 export const pickupAddressService = {

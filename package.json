@@ -74,6 +74,7 @@
     "node-cron": "^3.0.3",
     "node-schedule": "^2.1.1",
     "paypal-rest-sdk": "^1.8.1",
+    "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "stripe": "^17.6.0",
     "uuid": "^11.0.2"

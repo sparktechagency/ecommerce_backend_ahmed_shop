@@ -44,9 +44,9 @@ const getPickupAddresss = catchAsync(
 
 const updatePickupAddress = catchAsync(async (req, res) => {
   //   const { id } = req.params;
-  const PickupAddressData = { ...req.body };
+  const pickupAddressData = { ...req.body };
   const result =
-    await pickupAddressService.updatePickaddPickupAddress(PickupAddressData);
+    await pickupAddressService.updatePickaddPickupAddress(pickupAddressData);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

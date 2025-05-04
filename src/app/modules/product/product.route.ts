@@ -12,22 +12,27 @@ const productRouter = express.Router();
 productRouter
   .post(
     '/create-product',
-    // auth(USER_ROLE.ADMIN, USER_ROLE.SUB_ADMIN),
-    upload.fields([{ name: 'images', maxCount: 10 }]),
+    auth(USER_ROLE.SELLER),
+    upload.fields([{ name: 'images', maxCount: 5 }]),
     // validateRequest(videoValidation.VideoSchema),
     productController.createProduct,
   )
   .get('/', productController.getAllProduct)
-  .get('/:id', auth(USER_ROLE.USER), productController.getSingleProduct)
+  .get('/sellers', auth(USER_ROLE.SELLER), productController.getAllProductBySeller)
+  .get(
+    '/:id',
+    auth(USER_ROLE.CUSTOMER, USER_ROLE.SELLER),
+    productController.getSingleProduct,
+  )
   .patch(
     '/:id',
-    // auth(USER_ROLE.ADMIN, USER_ROLE.SUB_ADMIN),
-    upload.fields([{ name: 'images', maxCount: 10 }]),
+    auth(USER_ROLE.SELLER),
+    upload.fields([{ name: 'images', maxCount: 1 }]),
     productController.updateSingleProduct,
   )
   .delete(
     '/:id',
-    // auth(USER_ROLE.ADMIN, USER_ROLE.SUB_ADMIN),
+    auth(USER_ROLE.SELLER),
     productController.deleteSingleProduct,
   );
 

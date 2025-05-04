@@ -19,6 +19,7 @@ import faqRouter from '../modules/faq/faq.route';
 import cartRouter from '../modules/cart/cart.route';
 import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
 import pickupAddressRouter from '../modules/pickupAddress/pickupAddress.route';
+import categoryRoutes from '../modules/category/category.route';
 
 const router = Router();
 
@@ -55,6 +56,10 @@ const moduleRoutes = [
   {
     path: '/payment',
     route: paymentRouter,
+  },
+  {
+    path: '/category',
+    route: categoryRoutes,
   },
   {
     path: '/withdraw',
