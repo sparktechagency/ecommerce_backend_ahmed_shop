@@ -5,8 +5,25 @@ import { orderService } from './orders.service';
 
 
 
-const getAllOrder = catchAsync(async (req, res) => {
-  const { meta, result } = await orderService.getAllOrderQuery(req.query);
+const createOrder = catchAsync(async (req, res) => {
+  const {userId} = req.user;
+  const orderData = req.body;
+  orderData.customerId = userId;
+  const  result = await orderService.orderCreateService(orderData);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Order Create successful!!',
+  });
+});
+
+
+const getAllOrderByCustomerAndSeller = catchAsync(async (req, res) => {
+  const {userId} = req.user;
+  const { meta, result } =
+    await orderService.getAllOrderByCustomerAndSellerQuery(req.query, userId);
 
   sendResponse(res, {
     success: true,
@@ -17,21 +34,7 @@ const getAllOrder = catchAsync(async (req, res) => {
   });
 });
 
-const getAllOrderByUser = catchAsync(async (req, res) => {
-    const {userId} = req.user;
-  const { meta, result } = await orderService.getAllOrderByUserQuery(
-    userId,
-    req.query,
-  );
 
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    meta: meta,
-    data: result,
-    message: 'My All Order are requered successful!!',
-  });
-});
 
 const getSingleOrder = catchAsync(async (req, res) => {
   const result = await orderService.getSingleOrderQuery(req.params.id);
@@ -45,10 +48,11 @@ const getSingleOrder = catchAsync(async (req, res) => {
 });
 
 const updateSingleOrderStatus = catchAsync(async (req, res) => {
+  const {userId} = req.user;
   const { id } = req.params;
   const status = req.query.status;
 
-  const result = await orderService.updateSingleOrderStatusQuery(id, status);
+  const result = await orderService.updateSingleOrderStatusQuery(id, status, userId);
 
   sendResponse(res, {
     success: true,
@@ -59,7 +63,8 @@ const updateSingleOrderStatus = catchAsync(async (req, res) => {
 });
 
 const deleteSingleOrder = catchAsync(async (req, res) => {
-  const result = await orderService.deletedOrderQuery(req.params.id);
+  const {userId} = req.user;
+  const result = await orderService.deletedOrderQuery(req.params.id, userId);
 
   sendResponse(res, {
     success: true,
@@ -70,8 +75,8 @@ const deleteSingleOrder = catchAsync(async (req, res) => {
 });
 
 export const orderController = {
-  getAllOrder,
-  getAllOrderByUser,
+  createOrder,
+  getAllOrderByCustomerAndSeller,
   getSingleOrder,
   updateSingleOrderStatus,
   deleteSingleOrder,

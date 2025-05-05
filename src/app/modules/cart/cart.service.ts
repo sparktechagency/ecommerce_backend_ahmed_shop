@@ -36,7 +36,7 @@ const createCartService = async (payload: TCart) => {
 
   const isExistCartProduct = await Cart.findOne({
     productId: payload.productId,
-    userId: payload.customerId,
+    customerId: payload.customerId,
   });
     if (isExistCartProduct) {
       throw new AppError(400, 'Product is already Exist. Please check cart page!!');

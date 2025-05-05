@@ -47,7 +47,7 @@ const addPaymentService = async (payload: any) => {
       throw new AppError(400, 'User is not found!');
     }
 
-    if (user.role !== 'user') {
+    if (user.role !== 'customer') {
       throw new AppError(400, 'User is not authorized as a User!!');
     }
 
@@ -155,6 +155,7 @@ const addPaymentService = async (payload: any) => {
     throw error;
   }
 };
+
 
 const getAllPaymentService = async (query: Record<string, unknown>) => {
   const PaymentQuery = new QueryBuilder(Payment.find(), query)
