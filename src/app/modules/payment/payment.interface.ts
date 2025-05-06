@@ -1,12 +1,13 @@
 import { Types } from 'mongoose';
 
 export type TPayment = {
-  userId: Types.ObjectId;
+  customerId: Types.ObjectId;
+  sellerId: Types.ObjectId;
   method: string;
   amount: Number;
+  adminAmount: Number;
   status: string;
   transactionId: string;
   transactionDate: Date;
-  session_id?: string;
   orderId: Types.ObjectId;
 };

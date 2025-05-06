@@ -10,10 +10,10 @@ import config from '../../config';
 
 const addPayment = catchAsync(async (req, res, next) => {
   const { userId } = req.user;
-  const orderData = req.body;
-  orderData.userId = userId;
+  const paymentData = req.body;
+  paymentData.customerId = userId;
 
-  const result = await paymentService.addPaymentService(orderData);
+  const result = await paymentService.addPaymentService(paymentData);
 
   if (result) {
     sendResponse(res, {

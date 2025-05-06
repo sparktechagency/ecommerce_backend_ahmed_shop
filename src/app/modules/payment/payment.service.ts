@@ -17,6 +17,7 @@ import { Order } from '../orders/orders.model';
 import { TProduct } from '../product/product.interface';
 import { notificationService } from '../notification/notification.service';
 import Cart from '../cart/cart.model';
+// import { initiatePayment } from './payment.utils';
 
 type SessionData = Stripe.Checkout.Session;
 
@@ -32,128 +33,69 @@ export const stripe = new Stripe(
 // console.log('stripe==', stripe);
 
 const addPaymentService = async (payload: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
 
-  // console.log('payment data', payload);
+  console.log("payment payload", payload);
 
-  try {
-    // console.log('console.log-1');
-    const newPayload: any = {};
-    console.log('payload==', payload);
+  const order = await Order.findById(payload.orderId);
 
-    const user = await User.findById(payload.userId).session(session);
-    if (!user) {
-      throw new AppError(400, 'User is not found!');
-    }
-
-    if (user.role !== 'customer') {
-      throw new AppError(400, 'User is not authorized as a User!!');
-    }
-
-    newPayload.orderDate = new Date();
-
-    const productlist = await Promise.all(
-      payload.cartIds.map(async (cartId: any) => {
-        // const singleProduct = await Product.findById(product.productId).session(
-        //   session,
-        // );
-
-        const cartItem = await Cart.findById(cartId).session(session);
-
-        if (!cartItem) {
-          throw new AppError(404, 'Cart is not Found!!');
-        }
-
-        const singleProduct = await Product.findById(
-          cartItem.productId,
-        ).session(session);
-
-        if (!singleProduct) {
-          throw new AppError(404, 'Product is not Found!!');
-        }
-
-        console.log(
-          'singleProduct==availableStock',
-          singleProduct.availableStock,
-        );
-        console.log('cartItem.quantity', cartItem.quantity);
-
-        if (Number(singleProduct.availableStock) < cartItem.quantity) {
-          throw new AppError(403, 'Insufficient stock for the product!');
-        }
-
-        return {
-          productId: cartItem.productId,
-          price: cartItem.price * cartItem.quantity,
-          quantity: cartItem.quantity,
-        };
-      }),
-    );
-
-    newPayload.productList = productlist;
-    newPayload.userId = payload.userId;
-    newPayload.phone_number = payload.phone_number;
-    newPayload.zip_code = payload.zip_code;
-    newPayload.street_name = payload.street_name;
-    newPayload.state_code = payload.state_code;
-    newPayload.locality = payload.locality;
-    newPayload.house_number = payload.house_number;
-    newPayload.given_name = payload.given_name;
-    newPayload.family_name = payload.family_name;
-    newPayload.country = payload.country;
-    newPayload.address2 = payload.address2;
-    newPayload.business = payload.business;
-
-
-    const totalAmount = productlist.reduce(
-      (acc, product) => acc + product.price,
-      0,
-    );
-    newPayload.totalAmount = totalAmount;
-    
-    if (!payload.shippingCost) {
-      throw new AppError(400, 'Shipping cost is required!');
-    } else {
-      payload.shippingCost = Number(payload.shippingCost);
-    }
-
-    console.log('newPayload with totalAmount==', newPayload);
-
-    const order = await Order.create([newPayload], { session });
-
-    if (!order[0]) {
-      throw new AppError(400, 'Failed to create order!');
-    }
-
-
-
-    const paymentInfo = {
-      orderId: order[0]._id,
-      amount: order[0].totalAmount + payload.shippingCost,
-      cartIds: payload.cartIds,
-    };
-
-    console.log('======stripe payment', paymentInfo);
-    const checkoutResult: any = await createCheckout(
-      payload.userId,
-      paymentInfo,
-    );
-
-    if (!checkoutResult) {
-      throw new AppError(400, 'Failed to create checkout session!');
-    }
-
-    // Commit transaction
-    await session.commitTransaction();
-    session.endSession();
-    return checkoutResult;
-  } catch (error) {
-    console.error('Transaction Error:', error);
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
+  if (!order) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
   }
+
+  if (order.paymentStatus === 'paid') {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Order already paid');
+  }
+
+  const customer = await User.findById(payload.customerId);
+  if (!customer) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Customer not found');
+  }
+
+  if (order.customerId.toString() !== payload.customerId.toString()) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'You are not valid Customer for this order');
+  }
+
+  const totalPaymentAmount =
+    Number(order.totalAmount) + Number(payload.shippingCost);
+
+    console.log('totalPaymentAmount', totalPaymentAmount);
+    const adminAmount = Number(totalPaymentAmount) * 0.1; // 10%
+
+    // payment process start here
+
+    // const paymentCreateData = {
+    //   customerPhone: '01744687793',
+    //   orderId: order._id,
+    //   totalAmount: totalPaymentAmount
+    // }
+
+  //  const initialPaymentResult = await initiatePayment(paymentCreateData);
+  // //  console.log('initialPaymentResult', initialPaymentResult);
+
+
+
+
+
+
+
+
+    // after the payment process completed then update the order status and payment data create in payment collection
+
+
+    const paymentData = {
+      customerId: payload.customerId,
+        sellerId: order.sellerId,
+        method: payload.method,
+        amount: totalPaymentAmount,
+        adminAmount: adminAmount,
+        status: 'paid',
+        transactionId: "dfsf5655666s64696",
+        transactionDate: new Date(),
+        orderId: order._id,
+    }
+
+  // const result = await Payment.create(paymentData);
+  return 'result';
 };
 
 
