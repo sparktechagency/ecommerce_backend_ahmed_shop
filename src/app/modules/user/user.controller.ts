@@ -57,6 +57,18 @@ const getAllUsers = catchAsync(async (req, res) => {
   });
 });
 
+
+const getdashboardOverview = catchAsync(async (req, res) => {
+  const result = await userService.getDashboardOverviewQuery(req.query);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Dashboard Overview are requered successful!!',
+  });
+});
+
 const getAllUserCount = catchAsync(async (req, res) => {
   const result = await userService.getAllUserCount();
 
@@ -157,6 +169,7 @@ export const userController = {
   blockedUser,
   deleteMyAccount,
   getAllUsers,
+  getdashboardOverview,
   getAllUserCount,
   getAllUserRasio,
 };

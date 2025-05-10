@@ -15,6 +15,7 @@ import { createToken, verifyToken } from '../../utils/tokenManage';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
 import Otp from '../otp/otp.model';
+import { Payment } from '../payment/payment.model';
 
 export type IFilter = {
   searchTerm?: string;
@@ -347,6 +348,21 @@ const getAllUserQuery = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
+
+const getDashboardOverviewQuery = async (query: Record<string, unknown>) => {
+  const allUserCount = await User.countDocuments({});
+  const totalSellerCount = await User.countDocuments({ role: USER_ROLE.SELLER });
+  const totalRevinewCount = (await Payment.find({status:'paid'})).reduce((acc, payment) => {
+    acc += Number(payment.adminAmount);
+    return acc;
+  },0)
+  return {
+    allUserCount,
+    totalSellerCount,
+    totalRevinewCount
+  };
+};
+
 const getAllUserCount = async () => {
   
   const allBusinessCount = await User.countDocuments({
@@ -490,6 +506,7 @@ export const userService = {
   deleteMyAccount,
   blockedUser,
   getAllUserQuery,
+  getDashboardOverviewQuery,
   getAllUserCount,
   getAllUserRatio,
 };

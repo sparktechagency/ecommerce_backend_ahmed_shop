@@ -34,7 +34,7 @@ paymentRouter
     paymentController.getAllPayment)
   // .get('/payment-tracking', auth(USER_ROLE.CUSTOMER), paymentController.getAllPaymentByCustomer)
   .get('/all-income-rasio', paymentController.getAllIncomeRasio)
-  .get('/all-income-rasio-by-days', paymentController.getAllIncomeRasioBydays)
+  .get('/all-income-rasio-by-days', auth(USER_ROLE.SELLER, ), paymentController.getAllIncomeRasioBydays)
   .get(
     '/all-earning-rasio',     
     auth(USER_ROLE.ADMIN),

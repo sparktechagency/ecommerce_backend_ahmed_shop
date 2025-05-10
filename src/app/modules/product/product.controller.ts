@@ -75,6 +75,21 @@ const getAllProductBySeller = catchAsync(async (req, res) => {
   });
 });
 
+const getAllProductOverviewBySeller = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const  result= await productService.getAllProductOverviewBySellerQuery(
+    req.query,
+    userId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Seller Overview are requered successful!!',
+  });
+});
+
 const getSingleProduct = catchAsync(async (req, res) => {
     const {userId} = req.user;
   const result = await productService.getSingleProductQuery(req.params.id, userId);
@@ -84,6 +99,20 @@ const getSingleProduct = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     data: result,
     message: 'Single Product are requered successful!!',
+  });
+});
+
+const getBestSellingProduct = catchAsync(async (req, res) => {
+    const {userId} = req.user;
+  const result = await productService.getBestSellingProductQuery(
+    userId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Best Selling Product are requered successful!!',
   });
 });
 
@@ -143,7 +172,9 @@ export const productController = {
   createProduct,
   getAllProduct,
   getAllProductBySeller,
+  getAllProductOverviewBySeller,
   getSingleProduct,
+  getBestSellingProduct,
   updateSingleProduct,
   deleteSingleProduct,
 };

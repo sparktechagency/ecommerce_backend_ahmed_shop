@@ -8,10 +8,10 @@ const reviewSchema = new Schema<TReview>(
       required: true,
       ref: 'User',
     },
-    businessId: {
+    sellerId: {
       type: Schema.Types.ObjectId,
       required: true,
-      ref: 'Business',
+      ref: 'User',
     },
     rating: {
       type: Number,

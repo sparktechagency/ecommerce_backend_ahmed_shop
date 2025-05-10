@@ -145,9 +145,10 @@ const getAllIncomeRasio = catchAsync(async (req, res) => {
 });
 
 const getAllIncomeRasioBydays = catchAsync(async (req, res) => {
+  const { userId } = req.user;
   const { days }: any = req.query;
 
-  const result = await paymentService.getAllIncomeRatiobyDays(days);
+  const result = await paymentService.getAllIncomeRatiobyDays(days, userId);
 
   sendResponse(res, {
     success: true,

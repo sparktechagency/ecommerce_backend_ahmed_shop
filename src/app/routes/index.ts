@@ -20,6 +20,7 @@ import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
 import pickupAddressRouter from '../modules/pickupAddress/pickupAddress.route';
 import categoryRoutes from '../modules/category/category.route';
 import offerRouter from '../modules/offer/offer.route';
+import reportRouter from '../modules/report/report.route';
 
 const router = Router();
 
@@ -105,6 +106,10 @@ const moduleRoutes = [
   {
     path: '/pickup-address',
     route: pickupAddressRouter,
+  },
+  {
+    path: '/report',
+    route: reportRouter,
   },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

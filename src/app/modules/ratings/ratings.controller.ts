@@ -8,10 +8,8 @@ const createReview = catchAsync(async (req, res) => {
   const { userId } = req.user;
   // console.log({ userId });
   reviewData.customerId = userId;
-
   const result = await reviewService.createReviewService(reviewData);
 
-  // Send response
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -20,11 +18,11 @@ const createReview = catchAsync(async (req, res) => {
   });
 });
 
-const getReviewByCustomer = catchAsync(async (req, res) => {
-  const { businessId }: any = req.query;
-  const { meta, result } = await reviewService.getAllReviewByBusinessQuery(
+const getReviewByCustomerAndSeller = catchAsync(async (req, res) => {
+ const {userId} = req.user;
+  const { meta, result } = await reviewService.getAllReviewByCustomerAndSellerQuery(
     req.query,
-    businessId,
+    userId,
   );
 
   sendResponse(res, {
@@ -76,7 +74,7 @@ const deleteSingleReview = catchAsync(async (req, res) => {
 
 export const reviewController = {
   createReview,
-  getReviewByCustomer,
+  getReviewByCustomerAndSeller,
   getSingleReview,
   updateSingleReview,
   deleteSingleReview,

@@ -8,6 +8,8 @@ import { access } from 'fs/promises';
 import { unlink } from 'fs/promises';
 import { Category } from '../category/category.model';
 import Offer from '../offer/offer.model';
+import { Payment } from '../payment/payment.model';
+import { Order } from '../orders/orders.model';
 // import PickupAddress from '../pickupAddress/pickupAddress.model';
 
 
@@ -139,6 +141,44 @@ const getAllProductBySellerQuery = async (query: Record<string, unknown>, userId
   return { meta, result: offerProductList };
 };
 
+
+const getAllProductOverviewBySellerQuery = async (
+  query: Record<string, unknown>,
+  sellerId: string,
+) => {
+  console.log('query==', query);
+
+  const productCount = await Product.countDocuments({
+    sellerId: sellerId,
+  });
+
+  const payments = await Payment.find({ sellerId }); 
+  const totalEarning = payments.reduce((acc, payment) => {
+    acc += Number(payment.amount);
+    return acc;
+  }, 0); 
+
+  console.log('productCount', productCount);
+  console.log('totalEarning', totalEarning);
+
+  const totalOrder = await Order.countDocuments({
+    sellerId: sellerId,
+  })
+  const totalPendingOrder = await Order.countDocuments({
+    sellerId: sellerId,
+    paymentStatus: 'pending',
+  });
+
+
+
+  return {
+    productCount,
+    totalEarning,
+    totalOrder,
+    totalPendingOrder
+  };
+};
+
 const getSingleProductQuery = async (id: string, userId:string) => {
     // console.log('userId=', userId);
 
@@ -170,6 +210,32 @@ const getSingleProductQuery = async (id: string, userId:string) => {
 
   return updateData;
 };
+
+
+
+const getBestSellingProductQuery = async (sellerId: string) => {
+  const allProducts: any = await Product.find({ sellerId });
+
+  if (!allProducts || allProducts.length === 0) {
+    throw new AppError(404, 'Products Not Found!!');
+  }
+
+  const productsWithSales = allProducts.map((product: any) => {
+    const soldAmount = product.stock - product.availableStock; 
+    return { ...product.toObject(), soldAmount };
+  });
+
+  const bestSellingProduct = productsWithSales.sort(
+    (a: any, b: any) => b.soldAmount - a.soldAmount,
+  ).slice(0, 1); // i can controll data from here 
+
+  if (!bestSellingProduct) {
+    throw new AppError(404, 'Best Selling Product Not Found!!');
+  }
+
+  return bestSellingProduct;
+};
+
 
 const updateSingleProductQuery = async (id: string, payload:any, userId:string) => {
   const product: any = await Product.findById(id);
@@ -269,6 +335,8 @@ export const productService = {
   createProductService,
   getAllProductQuery,
   getAllProductBySellerQuery,
+  getBestSellingProductQuery,
+  getAllProductOverviewBySellerQuery,
   getSingleProductQuery,
   updateSingleProductQuery,
   deletedProductQuery,

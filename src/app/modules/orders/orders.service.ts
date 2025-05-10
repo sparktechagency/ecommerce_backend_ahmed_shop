@@ -53,12 +53,43 @@ const orderCreateService = async (payload: any) => {
         house_number: payload.house_number,
         country: payload.country,
         address: payload.address,
+        history: [
+      {
+        status: 'completed',
+        date: new Date(),
+      },
+      {
+        status: 'recived',
+        date: '',
+      },
+      {
+        status: 'ongoing',
+        date: '',
+      },
+      {
+        status: 'delivery',
+        date: '',
+      },
+      {
+        status: 'finished',
+        date: '',
+      },
+    ]
+
       };
     },
   );
  console.log('separateOrders', separateOrders);
   const order = await Order.create(separateOrders);
   console.log('order created', order);
+
+
+   const cartDeleteData = await Cart.deleteMany({
+     customerId: payload.customerId,
+   });
+   if (!cartDeleteData) {
+     throw new AppError(httpStatus.BAD_REQUEST, 'Cart deleted Failed!!');
+   }
 
  
 
@@ -162,6 +193,7 @@ const getAllOrderByCustomerAndSellerQuery = async (query: Record<string, unknown
 
 
 
+
 const getSingleOrderQuery = async (id: string) => {
   const order: any = await Order.findById(id).populate('productList.productId');
   if (!order) {
@@ -169,6 +201,9 @@ const getSingleOrderQuery = async (id: string) => {
   }
   return order;
 };
+
+
+
 
 const updateSingleOrderStatusQuery = async (id: string, status: any, sellerId: string) => {
   const orderProduct: any = await Order.findById(id);

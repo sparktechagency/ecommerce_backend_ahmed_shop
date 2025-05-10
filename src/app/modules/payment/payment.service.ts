@@ -17,7 +17,7 @@ import { Order } from '../orders/orders.model';
 import { TProduct } from '../product/product.interface';
 import { notificationService } from '../notification/notification.service';
 import Cart from '../cart/cart.model';
-// import { initiatePayment } from './payment.utils';
+import { initiatePayment } from './payment.utils';
 
 type SessionData = Stripe.Checkout.Session;
 
@@ -31,6 +31,94 @@ export const stripe = new Stripe(
 );
 
 // console.log('stripe==', stripe);
+
+// const addPaymentService = async (payload: any) => {
+
+//   console.log("payment payload", payload);
+
+//   const order = await Order.findById(payload.orderId);
+
+//   if (!order) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
+//   }
+
+//   if (order.paymentStatus === 'paid') {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Order already paid');
+//   }
+
+//   const customer = await User.findById(payload.customerId);
+//   if (!customer) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Customer not found');
+//   }
+
+//   if (order.customerId.toString() !== payload.customerId.toString()) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'You are not valid Customer for this order');
+//   }
+
+//   const totalPaymentAmount =
+//     Number(order.totalAmount) + Number(payload.shippingCost);
+
+//     console.log('totalPaymentAmount', totalPaymentAmount);
+//     const adminAmount = Number(totalPaymentAmount) * 0.1; // 10%
+
+//     // payment process start here
+
+//     // const paymentCreateData = {
+//     //   customerPhone: '01744687793',
+//     //   orderId: order._id,
+//     //   totalAmount: totalPaymentAmount
+//     // }
+
+//   //  const initialPaymentResult = await initiatePayment(paymentCreateData);
+//   // //  console.log('initialPaymentResult', initialPaymentResult);
+
+
+
+
+
+
+
+
+//     // after the payment process completed then update the order status and payment data create in payment collection
+
+
+//     const paymentData = {
+//       customerId: payload.customerId,
+//         sellerId: order.sellerId,
+//         method: payload.method,
+//         amount: totalPaymentAmount - adminAmount,
+//         adminAmount: adminAmount,
+//         status: 'paid',
+//         transactionId: "dfsf5655666s64696",
+//         transactionDate: new Date(),
+//         orderId: order._id,
+//     }
+
+//   const result = await Payment.create(paymentData);
+//   if(!result){
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Payment created Failed!!');
+
+//   }
+
+
+//   const orderUpdateData = await Order.updateOne(
+//     { _id: order._id },
+//     { $set: { paymentStatus: 'paid' },  },
+//   )
+
+//   if (!orderUpdateData) {
+//     throw new AppError(httpStatus.BAD_REQUEST, 'Order updated Failed!!');
+//   }
+
+//   // cart multiple product deleted
+
+
+ 
+
+
+//   return result;
+// };
+
 
 const addPaymentService = async (payload: any) => {
 
@@ -63,14 +151,14 @@ const addPaymentService = async (payload: any) => {
 
     // payment process start here
 
-    // const paymentCreateData = {
-    //   customerPhone: '01744687793',
-    //   orderId: order._id,
-    //   totalAmount: totalPaymentAmount
-    // }
+    const paymentCreateData = {
+      customerPhone: '01744687793',
+      orderId: order._id,
+      totalAmount: totalPaymentAmount
+    }
 
-  //  const initialPaymentResult = await initiatePayment(paymentCreateData);
-  // //  console.log('initialPaymentResult', initialPaymentResult);
+   const initialPaymentResult = await initiatePayment(paymentCreateData);
+  //  console.log('initialPaymentResult', initialPaymentResult);
 
 
 
@@ -82,19 +170,40 @@ const addPaymentService = async (payload: any) => {
     // after the payment process completed then update the order status and payment data create in payment collection
 
 
-    const paymentData = {
-      customerId: payload.customerId,
-        sellerId: order.sellerId,
-        method: payload.method,
-        amount: totalPaymentAmount,
-        adminAmount: adminAmount,
-        status: 'paid',
-        transactionId: "dfsf5655666s64696",
-        transactionDate: new Date(),
-        orderId: order._id,
-    }
+  //   const paymentData = {
+  //     customerId: payload.customerId,
+  //       sellerId: order.sellerId,
+  //       method: payload.method,
+  //       amount: totalPaymentAmount - adminAmount,
+  //       adminAmount: adminAmount,
+  //       status: 'paid',
+  //       transactionId: "dfsf5655666s64696",
+  //       transactionDate: new Date(),
+  //       orderId: order._id,
+  //   }
 
   // const result = await Payment.create(paymentData);
+  // if(!result){
+  //   throw new AppError(httpStatus.BAD_REQUEST, 'Payment created Failed!!');
+
+  // }
+
+
+  // const orderUpdateData = await Order.updateOne(
+  //   { _id: order._id },
+  //   { $set: { paymentStatus: 'paid' },  },
+  // )
+
+  // if (!orderUpdateData) {
+  //   throw new AppError(httpStatus.BAD_REQUEST, 'Order updated Failed!!');
+  // }
+
+  // cart multiple product deleted
+
+
+ 
+
+
   return 'result';
 };
 
@@ -165,7 +274,7 @@ const getAllIncomeRatio = async (year: number) => {
     {
       $group: {
         _id: { month: { $month: '$transactionDate' } },
-        totalIncome: { $sum: '$amount' },
+        totalIncome: { $sum: '$adminAmount' },
       },
     },
     {
@@ -294,7 +403,7 @@ const getAllIncomeRatio = async (year: number) => {
 //   return timeSlots;
 // };
 
-const getAllIncomeRatiobyDays = async (days: string) => {
+const getAllIncomeRatiobyDays = async (days: string, sellerId: string) => {
   const currentDay = new Date();
   let startDate: Date;
 
@@ -326,6 +435,7 @@ const getAllIncomeRatiobyDays = async (days: string) => {
   const incomeData = await Payment.aggregate([
     {
       $match: {
+        sellerId: new mongoose.Types.ObjectId(sellerId),
         transactionDate: { $gte: startDate, $lte: currentDay },
       },
     },
