@@ -9,11 +9,16 @@ const paymentRouter = express.Router();
 
 paymentRouter
   .post('/add-payment', auth(USER_ROLE.CUSTOMER), paymentController.addPayment)
-  //   .post(
-  //     '/create-stripe-account',
-  //     auth(USER_ROLE.BUSINESS),
-  //     paymentController.createStripeAccount,
-  //   )
+  .post(
+    '/create-stripe-connected-account',
+    auth(USER_ROLE.SELLER),
+    paymentController.createStripeAccount,
+  )
+  .post(
+    '/login-stripe-connected-account',
+    auth(USER_ROLE.SELLER),
+    paymentController.stripeConnectedAccountLogin,
+  )
   //   .post(
   //     '/transfer',
   //     auth(USER_ROLE.BUSINESS),
@@ -29,33 +34,28 @@ paymentRouter
   .get('/success', paymentController.successPage)
   .get('/cancel', paymentController.cancelPage)
 
-  .get('/', 
-    // auth(USER_ROLE.ADMIN), 
-    paymentController.getAllPayment)
+  .get(
+    '/',
+    // auth(USER_ROLE.ADMIN),
+    paymentController.getAllPayment,
+  )
   // .get('/payment-tracking', auth(USER_ROLE.CUSTOMER), paymentController.getAllPaymentByCustomer)
   .get('/all-income-rasio', paymentController.getAllIncomeRasio)
-  .get('/all-income-rasio-by-days', auth(USER_ROLE.SELLER, ), paymentController.getAllIncomeRasioBydays)
   .get(
-    '/all-earning-rasio',     
+    '/all-income-rasio-by-days',
+    auth(USER_ROLE.SELLER),
+    paymentController.getAllIncomeRasioBydays,
+  )
+  .get(
+    '/all-earning-rasio',
     auth(USER_ROLE.ADMIN),
     paymentController.getAllEarningRasio,
   )
 
-  //   .get('/refreshAccountConnect/:id', paymentController.refreshAccountConnect)
+  .get('/refreshAccountConnect/:id', paymentController.refreshAccountConnect)
   .get('/:id', paymentController.getSinglePayment)
-  //   .get('/success-account/:id', paymentController.successPageAccount)
+  .get('/success-account/:id', paymentController.successPageAccount)
 
   .delete('/:id', paymentController.deleteSinglePayment);
 
 export default paymentRouter;
-
-
-
-
-
-
-
-
-
-
-

@@ -4,6 +4,7 @@ import { Types } from "mongoose"
    productId: Types.ObjectId;
    sellerId: Types.ObjectId;
    customerId: Types.ObjectId;
+   shopId: Types.ObjectId;
    price: number;
    quantity: number;
    offer: number;

@@ -45,6 +45,7 @@ const OrderSchema = new Schema<TOrder>(
   {
     customerId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
     sellerId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    shopId: { type: Schema.Types.ObjectId, required: true, ref: 'Shop' },
     productList: { type: [ProductLishSchema], required: true },
     totalAmount: { type: Number, required: true },
     orderDate: { type: Date, required: true },

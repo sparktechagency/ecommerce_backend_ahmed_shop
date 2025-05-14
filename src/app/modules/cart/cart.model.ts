@@ -17,6 +17,11 @@ const cartSchema = new Schema<TCart>({
     ref: 'User',
     required: true,
   },
+  shopId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Shop',
+    required: true,
+  },
   price: {
     type: Number,
     required: true,

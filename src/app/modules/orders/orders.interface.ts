@@ -14,6 +14,7 @@ export type TProductLish = {
 export type TOrder = {
   customerId: Types.ObjectId;
   sellerId: Types.ObjectId;
+  shopId: Types.ObjectId;
   productList: [TProductLish];
   totalAmount: Number;
   orderDate: Date;

@@ -19,6 +19,7 @@ const createProduct = catchAsync(async (req, res) => {
   if (isExist) {
     throw new AppError(400, 'Product already exist !');
   }
+  
   productData.availableStock = Number(productData.stock);
   productData.stock =Number(productData.stock);
   productData.price = Number(productData.price);

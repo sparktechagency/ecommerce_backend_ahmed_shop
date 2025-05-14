@@ -2,6 +2,7 @@ import QueryBuilder from '../../builder/QueryBuilder';
 import AppError from '../../error/AppError';
 import Offer from '../offer/offer.model';
 import Product from '../product/product.model';
+import Shop from '../shop/shop.model';
 import { User } from '../user/user.models';
 import { TCart } from './cart.interface';
 import Cart from './cart.model';
@@ -11,9 +12,17 @@ const createCartService = async (payload: TCart) => {
   if (!isProductExist) {
     throw new AppError(400, 'Product is not Found!!');
   }
+  console.log('isProductExist', isProductExist);
   
   payload.weight = Number(isProductExist.weight); 
   payload.sellerId = isProductExist.sellerId;
+  console.log('payload', payload);
+
+  const shopExist = await Shop.findOne(isProductExist.shopId);
+  if (!shopExist) {
+    throw new AppError(400, 'Shop is not Found!!');
+  }
+  payload.shopId = shopExist._id;
 
   const isOfferExist = await Offer.findOne({
     productId: payload.productId,

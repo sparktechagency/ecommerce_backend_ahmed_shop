@@ -19,7 +19,8 @@ const orderCreateService = async (payload: any) => {
   }
 
   const cartItems = await Cart.find({ customerId: payload.customerId });
-  if (!cartItems) {
+  console.log(' cartItems==', cartItems);
+  if (cartItems.length === 0) {
     throw new AppError(404, 'Cart items is not Found!!');
   }
 
@@ -40,6 +41,7 @@ const orderCreateService = async (payload: any) => {
     ([sellerId, items]: any) => {
       return {
         sellerId,
+        shopId: items[0].shopId,
         customerId: items[0].customerId,
         productList: items,
         totalAmount: items.reduce((sum: any, item: any) => sum + item.price, 0),
@@ -92,80 +94,7 @@ const orderCreateService = async (payload: any) => {
    }
 
  
-
-  // const productlist = await Promise.all(
-  //   payload.cartIds.map(async (cartId: any) => {
-  //     // const singleProduct = await Product.findById(product.productId).session(
-  //     //   session,
-  //     // );
-
-  //     const cartItem = await Cart.findById(cartId);
-
-  //     if (!cartItem) {
-  //       throw new AppError(404, 'Cart is not Found!!');
-  //     }
-
-  //     const singleProduct = await Product.findById(
-  //       cartItem.productId,
-  //     );
-
-  //     if (!singleProduct) {
-  //       throw new AppError(404, 'Product is not Found!!');
-  //     }
-
-  //     console.log(
-  //       'singleProduct==availableStock',
-  //       singleProduct.availableStock,
-  //     );
-  //     console.log('cartItem.quantity', cartItem.quantity);
-
-  //     if (Number(singleProduct.availableStock) < cartItem.quantity) {
-  //       throw new AppError(403, 'Insufficient stock for the product!');
-  //     }
-
-  //     return {
-  //       productId: cartItem.productId,
-  //       price: cartItem.price * cartItem.quantity,
-  //       quantity: cartItem.quantity,
-  //     };
-  //   }),
-  // );
-
-  // newPayload.productList = productlist;
-  // newPayload.userId = payload.userId;
-  // newPayload.phone_number = payload.phone_number;
-  // newPayload.zip_code = payload.zip_code;
-  // newPayload.street_name = payload.street_name;
-  // newPayload.state_code = payload.state_code;
-  // newPayload.locality = payload.locality;
-  // newPayload.house_number = payload.house_number;
-  // newPayload.given_name = payload.given_name;
-  // newPayload.family_name = payload.family_name;
-  // newPayload.country = payload.country;
-  // newPayload.address2 = payload.address2;
-  // newPayload.business = payload.business;
-
-  // const totalAmount = productlist.reduce(
-  //   (acc, product) => acc + product.price,
-  //   0,
-  // );
-  // newPayload.totalAmount = totalAmount;
-
-  // if (!payload.shippingCost) {
-  //   throw new AppError(400, 'Shipping cost is required!');
-  // } else {
-  //   payload.shippingCost = Number(payload.shippingCost);
-  // }
-
-  // console.log('newPayload with totalAmount==', newPayload);
-
-  // const order = await Order.create(newPayload);
-
-  // if (!order) {
-  //   throw new AppError(400, 'Failed to create order!');
-  // }
-
-  return 'order';
+  return order;
 };
 
 const getAllOrderByCustomerAndSellerQuery = async (query: Record<string, unknown>, userId: string) => {

@@ -6,9 +6,10 @@ import AppError from '../error/AppError';
 import config from '../config/index';
 import { User } from '../modules/user/user.models';
 import { verifyToken } from '../utils/tokenManage';
+import { NextFunction, Request, Response } from 'express';
 
 const auth = (...userRoles: string[]) => {
-  return catchAsync(async (req, res, next) => {
+  return catchAsync(async (req:Request, res:Response, next:NextFunction) => {
     const token = req?.headers?.authorization?.split(' ')[1];                 
     if (!token) {
       throw new AppError(httpStatus.UNAUTHORIZED, 'you are not authorized!');

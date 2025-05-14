@@ -21,6 +21,7 @@ import pickupAddressRouter from '../modules/pickupAddress/pickupAddress.route';
 import categoryRoutes from '../modules/category/category.route';
 import offerRouter from '../modules/offer/offer.route';
 import reportRouter from '../modules/report/report.route';
+import shopRouter from '../modules/shop/shop.route';
 
 const router = Router();
 
@@ -110,6 +111,10 @@ const moduleRoutes = [
   {
     path: '/report',
     route: reportRouter,
+  },
+  {
+    path: '/shop',
+    route: shopRouter,
   },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

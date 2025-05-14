@@ -26,7 +26,7 @@ const paymentSchema = new Schema<TPayment>(
     transactionId: {
       type: String,
       required: true,
-      unique:true
+      unique: true,
     },
     transactionDate: {
       type: Date,
@@ -35,6 +35,10 @@ const paymentSchema = new Schema<TPayment>(
     orderId: {
       type: Schema.Types.ObjectId,
       ref: 'Order',
+      required: true,
+    },
+    session_id: {
+      type: String,
       required: true,
     },
   },

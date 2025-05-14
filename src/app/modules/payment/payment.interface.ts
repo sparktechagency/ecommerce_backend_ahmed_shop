@@ -10,4 +10,5 @@ export type TPayment = {
   transactionId: string;
   transactionDate: Date;
   orderId: Types.ObjectId;
+  session_id: string;
 };

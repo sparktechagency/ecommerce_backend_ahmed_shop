@@ -4,6 +4,7 @@ import { TProduct } from "./product.interface";
 const productSchema = new Schema<TProduct>(
   {
     sellerId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    shopId: { type: Schema.Types.ObjectId, required: true, ref: 'Shop' },
     categoryId: {
       type: Schema.Types.ObjectId,
       required: true,

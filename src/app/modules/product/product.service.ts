@@ -10,6 +10,9 @@ import { Category } from '../category/category.model';
 import Offer from '../offer/offer.model';
 import { Payment } from '../payment/payment.model';
 import { Order } from '../orders/orders.model';
+import Shop from '../shop/shop.model';
+import { StripeAccount } from '../stripeAccount/stripeAccount.model';
+import { stripe } from '../payment/payment.service';
 // import PickupAddress from '../pickupAddress/pickupAddress.model';
 
 
@@ -21,6 +24,43 @@ const createProductService = async (payload: TProduct) => {
   //   throw new AppError(400, 'Pickup Address is not Found!!');
   // }
 
+    const isStripeConnectedAccount = await StripeAccount.findOne({
+      userId: payload.sellerId,
+    });
+
+    if (!isStripeConnectedAccount) {
+      throw new AppError(404, 'Stripe Connected Account Not Found!!');
+    }
+
+    if (isStripeConnectedAccount.isCompleted === false) {
+      throw new AppError(
+        404,
+        'Stripe Connected Account Not Valid or incompleted. Please again create account!!',
+      );
+    }
+
+    const account = await stripe.accounts.retrieve(
+      isStripeConnectedAccount.accountId,
+    );
+    if (!account.payouts_enabled) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Payouts are not enabled for this account',
+      );
+    }
+
+  const isExistShop = await Shop.findOne({ sellerId: payload.sellerId });
+  if (!isExistShop) {
+    throw new AppError(400, 'Shop is not Found!!');
+  }
+  if (isExistShop.status !== 'verify') {
+    throw new AppError(
+      400,
+      'Your shop is not verified yet. Until the verification process is complete, you cannot add any products. Please complete the verification and try again. Thank you.',
+    );
+  }
+
+  payload.shopId = isExistShop._id;
 
 
   const categoryExist = await Category.findOne({
