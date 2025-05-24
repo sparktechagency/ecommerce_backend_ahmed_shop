@@ -7,6 +7,14 @@ import { TNotification } from './notification.interface';
 
 const createNotification = async (payload: any, session?: any) => {
   const result = await Notification.create([payload], { session });
+  if (!result) {
+    throw new AppError(403, 'Notification create failed!');
+  }
+
+  if(result.length > 0){
+    io.emit('notification', result[0]);
+  }
+
   return result;
 };
 
