@@ -4,12 +4,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { Application, Request, Response } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import globalErrorHandler from './app/middleware/globalErrorhandler';
 import notFound from './app/middleware/notfound';
 import router from './app/routes';
 import path from 'path';
 import { paymentController } from './app/modules/payment/payment.controller';
+import mongoose from 'mongoose';
 
 const app: Application = express();
 
@@ -44,10 +45,40 @@ app.use(
 // application routes
 app.use('/api/v1', router);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('server is running');
+async function checkServerStatus(): Promise<boolean> {
+  // Example: check if mongoose connection is ready
+  return mongoose.connection.readyState === 1; // 1 = connected
+}
+
+app.get('/', async (req: Request, res: Response, next:NextFunction) => {
+  // res.send('server is running');
+  
+  
+  try {
+    const serverIsRunning = await checkServerStatus();
+    console.log('serverIsRunning', serverIsRunning);
+    if (!serverIsRunning) {
+      // return res.status(503).render('error.ejs', {
+      //   message: 'Server is currently offline. Please try again later.',
+      // });
+      res.send('server is error');
+    }
+    res.render('server-running.ejs');
+    
+  } catch (error) {
+    // res.send('server is error');
+    next(error);
+    
+  }
 });
+
+app.get('/', async (req: Request, res: Response, next:NextFunction) => {
+  
+  res.render('server-running.ejs');
+});
+
 app.use(globalErrorHandler);
+
 
 //Not Found
 app.use(notFound);
