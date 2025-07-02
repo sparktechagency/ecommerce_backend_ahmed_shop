@@ -22,5 +22,5 @@ export  type TProduct = {
   // height: string;
   // width: string;
   isDeleted: boolean;
-  isOffer?: Types.ObjectId | false;
+  isOffer?: Types.ObjectId;
 };

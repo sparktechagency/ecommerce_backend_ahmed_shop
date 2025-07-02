@@ -17,7 +17,7 @@ const addWithdrawService = async (payload: TWithdraw) => {
     throw new AppError(400, 'Business is not found!');
   }
 
-  if (business.role !== 'business') {
+  if (business.role !== 'seller') {
     throw new AppError(400, 'User is not authorized as a Mentor!!');
   }
 

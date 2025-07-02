@@ -11,7 +11,7 @@ const createShopService = async (payload: TShop) => {
     sellerId: payload.sellerId,
   });
   if (isExist) {
-    throw new AppError(400, 'Shop already exist for this seller');
+    throw new AppError(400, 'Shop already exist for this seller!!');
   }
 
   const result = await Shop.create(payload);

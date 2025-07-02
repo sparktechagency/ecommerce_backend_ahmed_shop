@@ -7,14 +7,14 @@ const favoriteProductRoutes = Router();
 
 favoriteProductRoutes.post(
   '',
-  auth(USER_ROLE.USER),
+  auth(USER_ROLE.CUSTOMER),
   //   validateRequest(paymnetValidation),
   favoriteProductController.createFavoriteProduct,
 );
 
 favoriteProductRoutes.get(
   '',
-  auth(USER_ROLE.USER),
+  auth(USER_ROLE.CUSTOMER),
   favoriteProductController.getAllFavoriteProductByUser,
 );
 // saveStoryRoutes.delete(

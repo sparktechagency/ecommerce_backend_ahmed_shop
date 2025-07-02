@@ -24,30 +24,30 @@ const createProductService = async (payload: TProduct) => {
   //   throw new AppError(400, 'Pickup Address is not Found!!');
   // }
 
-    const isStripeConnectedAccount = await StripeAccount.findOne({
-      userId: payload.sellerId,
-    });
+    // const isStripeConnectedAccount = await StripeAccount.findOne({
+    //   userId: payload.sellerId,
+    // });
 
-    if (!isStripeConnectedAccount) {
-      throw new AppError(404, 'Stripe Connected Account Not Found!!');
-    }
+    // if (!isStripeConnectedAccount) {
+    //   throw new AppError(404, 'Stripe Connected Account Not Found!!');
+    // }
 
-    if (isStripeConnectedAccount.isCompleted === false) {
-      throw new AppError(
-        404,
-        'Stripe Connected Account Not Valid or incompleted. Please again create account!!',
-      );
-    }
+    // if (isStripeConnectedAccount.isCompleted === false) {
+    //   throw new AppError(
+    //     404,
+    //     'Stripe Connected Account Not Valid or incompleted. Please again create account!!',
+    //   );
+    // }
 
-    const account = await stripe.accounts.retrieve(
-      isStripeConnectedAccount.accountId,
-    );
-    if (!account.payouts_enabled) {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'Payouts are not enabled for this account',
-      );
-    }
+    // const account = await stripe.accounts.retrieve(
+    //   isStripeConnectedAccount.accountId,
+    // );
+    // if (!account.payouts_enabled) {
+    //   throw new AppError(
+    //     httpStatus.BAD_REQUEST,
+    //     'Payouts are not enabled for this account',
+    //   );
+    // }
 
   const isExistShop = await Shop.findOne({ sellerId: payload.sellerId });
   if (!isExistShop) {
@@ -118,24 +118,61 @@ const getAllProductQuery = async (query: Record<string, unknown>) => {
 
   const result = await productQuery.modelQuery;
 
+// const isOfferByProduct = await Offer.find({
+//   endDate: { $gte: new Date() },
+// });
+//   const offerProductList = await Promise.all(
+//     result.map(async (product: any) => {
+//       const offer = isOfferByProduct.find(
+//         (offer) => offer.productId.equals(product._id),
+//       )
+//       console.log('offer==', offer);
+//       console.log('offer==', offer?.offer);
+//        let populatedProduct:any = await Product.findById(product._id).populate('sellerId').exec();
+  
+//       if (offer) {
+//         populatedProduct.isOffer = offer?.offer; 
+//       } else {
+//         populatedProduct.isOffer = false;
+//       }
+//         return populatedProduct;
+//     })
+//   )
+
 const isOfferByProduct = await Offer.find({
   endDate: { $gte: new Date() },
+  productId: { $in: result.map((product: any) => product._id) },
 });
-  const offerProductList = await Promise.all(
-    result.map(async (product: any) => {
-      const offer = isOfferByProduct.find(
-        (offer) => offer.productId.equals(product._id),
-      )
-       let populatedProduct:any = await Product.findById(product._id).populate('sellerId').exec();
-  
-      if (offer) {
-        populatedProduct.isOffer = offer; 
-      } else {
-        populatedProduct.isOffer = false;
-      }
-        return populatedProduct;
-    })
-  )
+console.log('isOfferByProduct==', isOfferByProduct);
+
+// Creating a map for faster lookup of offers by productId
+const offerMap = isOfferByProduct.reduce((map:any, offer) => {
+  map[offer.productId.toString()] = offer.offer; // Store offer by productId as key (convert to string)
+  return map;
+}, {});
+
+console.log('offerMap==', offerMap);
+
+const offerProductList = result.map((product: any) => {
+  // Convert Mongoose document to a plain JavaScript object
+  // This is important to allow adding new properties like 'isOffer'
+  const productObject = product.toObject();
+
+  const offerForProduct = offerMap[product._id.toString()];
+  console.log('offerForProduct==', offerForProduct);
+
+  if (offerForProduct) {
+    console.log('Found offer for product:', offerForProduct);
+    productObject.isOffer = offerForProduct;
+  } else {
+    console.log('No offer found for product:', product._id);
+    productObject.isOffer = null; // Or false, depending on your desired default
+  }
+
+  return productObject;
+});
+
+  console.log('offerProductList==', offerProductList);
 
   const meta = await productQuery.countTotal();
   return { meta, result: offerProductList };
@@ -160,22 +197,36 @@ const getAllProductBySellerQuery = async (query: Record<string, unknown>, userId
 
   const isOfferByProduct = await Offer.find({
     endDate: { $gte: new Date() },
+    productId: { $in: result.map((product: any) => product._id) },
   });
-  const offerProductList = await Promise.all(
-    result.map(async (product: any) => {
-      const offer = isOfferByProduct.find((offer) =>
-        offer.productId.equals(product._id),
-      );
-      let populatedProduct: any = await Product.findById(product._id).populate('sellerId').exec();
+  console.log('isOfferByProduct==', isOfferByProduct);
 
-      if (offer) {
-        populatedProduct.isOffer = offer;
-      } else {
-        populatedProduct.isOffer = false;
-      }
-      return populatedProduct;
-    }),
-  );
+  // Creating a map for faster lookup of offers by productId
+  const offerMap = isOfferByProduct.reduce((map: any, offer) => {
+    map[offer.productId.toString()] = offer.offer; // Store offer by productId as key (convert to string)
+    return map;
+  }, {});
+
+  console.log('offerMap==', offerMap);
+
+  const offerProductList = result.map((product: any) => {
+    // Convert Mongoose document to a plain JavaScript object
+    // This is important to allow adding new properties like 'isOffer'
+    const productObject = product.toObject();
+
+    const offerForProduct = offerMap[product._id.toString()];
+    console.log('offerForProduct==', offerForProduct);
+
+    if (offerForProduct) {
+      console.log('Found offer for product:', offerForProduct);
+      productObject.isOffer = offerForProduct;
+    } else {
+      console.log('No offer found for product:', product._id);
+      productObject.isOffer = null; // Or false, depending on your desired default
+    }
+
+    return productObject;
+  });
 
   const meta = await productQuery.countTotal();
   return { meta, result: offerProductList };
@@ -245,7 +296,7 @@ const getSingleProductQuery = async (id: string, userId:string) => {
     (offer) => offer.productId.equals(product._id),
   );
   if (offer) {
-    updateData.isOffer = offer;
+    updateData.isOffer = offer.offer;
   }
 
   return updateData;

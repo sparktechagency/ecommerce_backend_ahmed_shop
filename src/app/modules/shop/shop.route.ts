@@ -20,14 +20,14 @@ shopRouter
   )
   .get(
     '/all-admin',
-    // auth(USER_ROLE.ADMIN),
+    auth(USER_ROLE.ADMIN),
     shopController.getAllShopbyAdmin,
   )
   .get('/', auth(USER_ROLE.SELLER), shopController.getShopBySeller)
   .get('/:id', shopController.getSingleShop)
   .patch(
     '/verify/:id',
-    // auth(USER_ROLE.ADMIN),
+    auth(USER_ROLE.ADMIN),
     shopController.verifySingleShop,
   )
   .patch(

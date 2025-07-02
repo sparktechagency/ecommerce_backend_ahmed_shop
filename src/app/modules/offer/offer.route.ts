@@ -12,7 +12,12 @@ offerRouter
     // validateRequest(videoValidation.VideoSchema),
     offerController.createOffer,
   )
-  .get('/', auth(USER_ROLE.SELLER), offerController.getAllOffer)
+
+  .get(
+    '/',
+    auth(USER_ROLE.SELLER),
+    offerController.getAllOffer,
+  )
   .get('/:id', offerController.getSingleOffer)
   .delete('/:id', auth(USER_ROLE.SELLER), offerController.deleteSingleOffer);
 

@@ -11,6 +11,7 @@ import router from './app/routes';
 import path from 'path';
 import { paymentController } from './app/modules/payment/payment.controller';
 import mongoose from 'mongoose';
+import { serverRunningTemplete } from './app/templete/templete';
 
 const app: Application = express();
 
@@ -45,36 +46,12 @@ app.use(
 // application routes
 app.use('/api/v1', router);
 
-async function checkServerStatus(): Promise<boolean> {
-  // Example: check if mongoose connection is ready
-  return mongoose.connection.readyState === 1; // 1 = connected
-}
 
-app.get('/', async (req: Request, res: Response, next:NextFunction) => {
-  // res.send('server is running');
-  
-  
-  try {
-    const serverIsRunning = await checkServerStatus();
-    console.log('serverIsRunning', serverIsRunning);
-    if (!serverIsRunning) {
-      // return res.status(503).render('error.ejs', {
-      //   message: 'Server is currently offline. Please try again later.',
-      // });
-      res.send('server is error');
-    }
-    res.render('server-running.ejs');
-    
-  } catch (error) {
-    // res.send('server is error');
-    next(error);
-    
-  }
-});
 
-app.get('/', async (req: Request, res: Response, next:NextFunction) => {
+app.get('/', async (req: Request, res: Response) => {
   
-  res.render('server-running.ejs');
+  // res.render('server-running.ejs');
+  res.send(serverRunningTemplete);
 });
 
 app.use(globalErrorHandler);

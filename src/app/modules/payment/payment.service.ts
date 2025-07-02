@@ -432,15 +432,19 @@ const createCheckout = async (userId: any, payload: any) => {
   };
 
 
+
   try {
     session = await stripe.checkout.sessions.create(sessionData);
   } catch (error) {
     console.log('Error', error);
   }
+  
   const { id: session_id, url }: any = session || {};
 
   return { url };
 };
+
+
 
 const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
   console.log('hit hise webhook controller servie');
