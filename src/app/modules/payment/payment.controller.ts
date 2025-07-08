@@ -5,15 +5,16 @@ import sendResponse from '../../utils/sendResponse';
 import Stripe from 'stripe';
 import AppError from '../../error/AppError';
 import config from '../../config';
-// import { StripeAccount } from '../stripeAccount/stripeAccount.model';
+import { StripeAccount } from '../stripeAccount/stripeAccount.model';
+import { cancelTemplete, successAccountTemplete, successTemplete } from '../../templete/templete';
 
 
 const addPayment = catchAsync(async (req, res, next) => {
   const { userId } = req.user;
-  const orderData = req.body;
-  orderData.userId = userId;
+  const paymentData = req.body;
+  paymentData.customerId = userId;
 
-  const result = await paymentService.addPaymentService(orderData);
+  const result = await paymentService.addPaymentService(paymentData);
 
   if (result) {
     sendResponse(res, {
@@ -145,9 +146,10 @@ const getAllIncomeRasio = catchAsync(async (req, res) => {
 });
 
 const getAllIncomeRasioBydays = catchAsync(async (req, res) => {
+  const { userId } = req.user;
   const { days }: any = req.query;
 
-  const result = await paymentService.getAllIncomeRatiobyDays(days);
+  const result = await paymentService.getAllIncomeRatiobyDays(days, userId);
 
   sendResponse(res, {
     success: true,
@@ -161,59 +163,62 @@ const getAllIncomeRasioBydays = catchAsync(async (req, res) => {
 
 const successPage = catchAsync(async (req, res) => {
   // console.log('hit hoise');
-  res.render('success.ejs');
+  // res.render('success.ejs');
+  res.send(successTemplete);
 });
 
 const cancelPage = catchAsync(async (req, res) => {
-  res.render('cancel.ejs');
+  // res.render('cancel.ejs');
+  res.send(cancelTemplete);
 });
 
-// const successPageAccount = catchAsync(async (req, res) => {
-//   // console.log('payment account hit hoise');
-//   const { id } = req.params;
-//   const account = await stripe.accounts.update(id, {});
-//   // console.log('account', account);
+const successPageAccount = catchAsync(async (req, res) => {
+  // console.log('payment account hit hoise');
+  const { id } = req.params;
+  const account = await stripe.accounts.update(id, {});
+  // console.log('account', account);
 
-//   if (
-//     account?.requirements?.disabled_reason &&
-//     account?.requirements?.disabled_reason.indexOf('rejected') > -1
-//   ) {
-//     return res.redirect(
-//       `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
-//     );
-//   }
-//   if (
-//     account?.requirements?.disabled_reason &&
-//     account?.requirements?.currently_due &&
-//     account?.requirements?.currently_due?.length > 0
-//   ) {
-//     return res.redirect(
-//       `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
-//     );
-//   }
-//   if (!account.payouts_enabled) {
-//     return res.redirect(
-//       `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
-//     );
-//   }
-//   if (!account.charges_enabled) {
-//     return res.redirect(
-//       `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
-//     );
-//   }
-//   // if (account?.requirements?.past_due) {
-//   //     return res.redirect(`${req.protocol + '://' + req.get('host')}/payment/refreshAccountConnect/${id}`);
-//   // }
-//   if (
-//     account?.requirements?.pending_verification &&
-//     account?.requirements?.pending_verification?.length > 0
-//   ) {
-//     // return res.redirect(`${req.protocol + '://' + req.get('host')}/payment/refreshAccountConnect/${id}`);
-//   }
-//   await StripeAccount.updateOne({ accountId: id }, { isCompleted: true });
+  if (
+    account?.requirements?.disabled_reason &&
+    account?.requirements?.disabled_reason.indexOf('rejected') > -1
+  ) {
+    return res.redirect(
+      `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
+    );
+  }
+  if (
+    account?.requirements?.disabled_reason &&
+    account?.requirements?.currently_due &&
+    account?.requirements?.currently_due?.length > 0
+  ) {
+    return res.redirect(
+      `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
+    );
+  }
+  if (!account.payouts_enabled) {
+    return res.redirect(
+      `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
+    );
+  }
+  if (!account.charges_enabled) {
+    return res.redirect(
+      `${req.protocol + '://' + req.get('host')}/api/v1/payment/refreshAccountConnect/${id}`,
+    );
+  }
+  // if (account?.requirements?.past_due) {
+  //     return res.redirect(`${req.protocol + '://' + req.get('host')}/payment/refreshAccountConnect/${id}`);
+  // }
+  if (
+    account?.requirements?.pending_verification &&
+    account?.requirements?.pending_verification?.length > 0
+  ) {
+    // return res.redirect(`${req.protocol + '://' + req.get('host')}/payment/refreshAccountConnect/${id}`);
+  }
+  await StripeAccount.updateOne({ accountId: id }, { isCompleted: true });
 
-//   res.render('success-account.ejs');
-// });
+  // res.render('success-account.ejs');
+  res.send(successAccountTemplete)
+});
 
 //webhook
 
@@ -309,30 +314,41 @@ const getAllEarningRasio = catchAsync(async (req, res) => {
 
 
 
-// const refreshAccountConnect = catchAsync(async (req, res) => {
-//   const { id } = req.params;
-//   const url = await paymentService.refreshAccountConnect(
-//     id,
-//     req.get('host') || '',
-//     req.protocol,
-//   );
-//   res.redirect(url);
-// });
+const refreshAccountConnect = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const url = await paymentService.refreshAccountConnect(
+    id,
+    req.get('host') || '',
+    req.protocol,
+  );
+  res.redirect(url);
+});
 
-// const createStripeAccount = catchAsync(async (req, res) => {
-//   const result = await paymentService.createStripeAccount(
-//     req.user,
-//     req.get('host') || '',
-//     req.protocol,
-//   );
+const createStripeAccount = catchAsync(async (req, res) => {
+  const result = await paymentService.createStripeAccount(
+    req.user,
+    req.get('host') || '',
+    req.protocol,
+  );
 
-//   sendResponse(res, {
-//     statusCode: 200,
-//     success: true,
-//     message: 'Stripe account created',
-//     data: result,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Stripe account created',
+    data: result,
+  });
+});
+
+const stripeConnectedAccountLogin = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const result = await paymentService.stripeConnectedAccountLoginQuery(userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Account login successfull!!',
+    data: result,
+  });
+});
 
 // const transferBalance = catchAsync(async (req, res) => {
 //   const { accountId, amount } = req.body;
@@ -363,11 +379,12 @@ export const paymentController = {
   successPage,
   cancelPage,
   getAllEarningRasio,
-  //   successPageAccount,
+  successPageAccount,
+  createStripeAccount,
+  stripeConnectedAccountLogin,
+  refreshAccountConnect,
+  //   transferBalance,
   //   paymentRefund,
   //   getAllEarningByPaymentMethod,
   //   getAllWithdrawEarningByPaymentMethod,
-  //   createStripeAccount,
-  //   refreshAccountConnect,
-  //   transferBalance,
 };

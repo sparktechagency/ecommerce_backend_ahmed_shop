@@ -14,12 +14,14 @@ import messageRouter from '../modules/message/message.route';
 import productRouter from '../modules/product/product.route';
 import orderRouter from '../modules/orders/orders.route';
 import favoriteProductRoutes from '../modules/favorite/favorite.route';
-import howMadeRouter from '../modules/howMade/howMade.route';
 import faqRouter from '../modules/faq/faq.route';
 import cartRouter from '../modules/cart/cart.route';
-import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
+// import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
 import pickupAddressRouter from '../modules/pickupAddress/pickupAddress.route';
 import categoryRoutes from '../modules/category/category.route';
+import offerRouter from '../modules/offer/offer.route';
+import reportRouter from '../modules/report/report.route';
+import shopRouter from '../modules/shop/shop.route';
 
 const router = Router();
 
@@ -83,6 +85,10 @@ const moduleRoutes = [
     route: productRouter,
   },
   {
+    path: '/offer',
+    route: offerRouter,
+  },
+  {
     path: '/cart',
     route: cartRouter,
   },
@@ -91,20 +97,24 @@ const moduleRoutes = [
     route: orderRouter,
   },
   {
-    path: '/how-made',
-    route: howMadeRouter,
-  },
-  {
     path: '/faq',
     route: faqRouter,
   },
-  {
-    path: '/shipping',
-    route: shippingRouter,
-  },
+  // {
+  //   path: '/shipping',
+  //   route: shippingRouter,
+  // },
   {
     path: '/pickup-address',
     route: pickupAddressRouter,
+  },
+  {
+    path: '/report',
+    route: reportRouter,
+  },
+  {
+    path: '/shop',
+    route: shopRouter,
   },
 ];
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

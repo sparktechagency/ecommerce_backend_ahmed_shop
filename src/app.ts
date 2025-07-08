@@ -4,12 +4,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express, { Application, Request, Response } from 'express';
+import express, { Application, NextFunction, Request, Response } from 'express';
 import globalErrorHandler from './app/middleware/globalErrorhandler';
 import notFound from './app/middleware/notfound';
 import router from './app/routes';
 import path from 'path';
 import { paymentController } from './app/modules/payment/payment.controller';
+import mongoose from 'mongoose';
+import { serverRunningTemplete } from './app/templete/templete';
 
 const app: Application = express();
 
@@ -18,7 +20,7 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.post(
-  '/api/v1/ducky-webhook-payment',
+  '/api/v1/ahmed-ecommerce-webhook-payment',
   express.raw({ type: 'application/json' }),
   paymentController.conformWebhook,
 );
@@ -44,10 +46,16 @@ app.use(
 // application routes
 app.use('/api/v1', router);
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('server is running');
+
+
+app.get('/', async (req: Request, res: Response) => {
+  
+  // res.render('server-running.ejs');
+  res.send(serverRunningTemplete);
 });
+
 app.use(globalErrorHandler);
+
 
 //Not Found
 app.use(notFound);

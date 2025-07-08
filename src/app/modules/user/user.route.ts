@@ -39,6 +39,7 @@ userRoutes
     userController.getMyProfile,
   )
   .get('/all-users', userController.getAllUsers)
+  .get('/dashboard-overview', userController.getdashboardOverview)
   .get('/all-users-count', userController.getAllUserCount)
   .get('/all-users-rasio', userController.getAllUserRasio)
   .get('/:id', userController.getUserById)

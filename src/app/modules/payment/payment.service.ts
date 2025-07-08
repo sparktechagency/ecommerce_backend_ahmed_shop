@@ -1,23 +1,16 @@
 import AppError from '../../error/AppError';
 import { User } from '../user/user.models';
-import { TPayment } from './payment.interface';
 import { Payment } from './payment.model';
 import QueryBuilder from '../../builder/QueryBuilder';
-import moment from 'moment';
 import Stripe from 'stripe';
 import httpStatus from 'http-status';
 import config from '../../config';
 import mongoose from 'mongoose';
 import { StripeAccount } from '../stripeAccount/stripeAccount.model';
-import { withdrawService } from '../withdraw/withdraw.service';
-import { Withdraw } from '../withdraw/withdraw.model';
-import cron from 'node-cron';
 import Product from '../product/product.model';
 import { Order } from '../orders/orders.model';
-import { TProduct } from '../product/product.interface';
 import { notificationService } from '../notification/notification.service';
-import Cart from '../cart/cart.model';
-
+import { TProduct } from '../product/product.interface';
 type SessionData = Stripe.Checkout.Session;
 
 // console.log({ first: config.stripe.stripe_api_secret });
@@ -32,111 +25,76 @@ export const stripe = new Stripe(
 // console.log('stripe==', stripe);
 
 const addPaymentService = async (payload: any) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
 
-  // console.log('payment data', payload);
+  console.log("payment payload", payload);
 
-  try {
-    // console.log('console.log-1');
-    const newPayload: any = {};
-    console.log('payload==', payload);
+  const order = await Order.findById(payload.orderId);
 
-    const user = await User.findById(payload.userId).session(session);
-    if (!user) {
-      throw new AppError(400, 'User is not found!');
+  if (!order) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
+  }
+
+  if (order.paymentStatus === 'paid') {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Order already paid');
+  }
+
+  const customer = await User.findById(payload.customerId);
+  if (!customer) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Customer not found');
+  }
+
+  if (order.customerId.toString() !== payload.customerId.toString()) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'You are not valid Customer for this order');
+  }
+
+
+  if(!payload.shippingCost){
+    throw new AppError(httpStatus.BAD_REQUEST, 'Shipping cost is required');
+
+  }
+  if(payload.shippingCost < 0){
+    throw new AppError(httpStatus.BAD_REQUEST, 'Shipping cost can not be negative');
+
+  }
+
+  const productStock = order.productList.map((product)=>{
+    const singleProduct: any = Product.findById(product.productId);
+    if(!singleProduct){
+      throw new AppError(httpStatus.BAD_REQUEST, 'Product not found');
     }
 
-    if (user.role !== 'user') {
-      throw new AppError(400, 'User is not authorized as a User!!');
+    if (singleProduct.availableStock < product.quantity) {
+      throw new AppError(httpStatus.BAD_REQUEST, `${singleProduct.name} is out of stock`);
+    }
+    return singleProduct
+  })
+
+  const totalPaymentAmount =
+    Number(order.totalAmount) + Number(payload.shippingCost);
+
+    console.log('totalPaymentAmount', totalPaymentAmount);
+
+    const stripeAccountCompleted = await StripeAccount.findOne({
+      userId: order.sellerId,
+    });
+
+    if (!stripeAccountCompleted) {
+      throw new AppError(404, 'Seller Stripe Account is not found!!');
     }
 
-    newPayload.orderDate = new Date();
-
-    const productlist = await Promise.all(
-      payload.cartIds.map(async (cartId: any) => {
-        // const singleProduct = await Product.findById(product.productId).session(
-        //   session,
-        // );
-
-        const cartItem = await Cart.findById(cartId).session(session);
-
-        if (!cartItem) {
-          throw new AppError(404, 'Cart is not Found!!');
-        }
-
-        const singleProduct = await Product.findById(
-          cartItem.productId,
-        ).session(session);
-
-        if (!singleProduct) {
-          throw new AppError(404, 'Product is not Found!!');
-        }
-
-        console.log(
-          'singleProduct==availableStock',
-          singleProduct.availableStock,
-        );
-        console.log('cartItem.quantity', cartItem.quantity);
-
-        if (Number(singleProduct.availableStock) < cartItem.quantity) {
-          throw new AppError(403, 'Insufficient stock for the product!');
-        }
-
-        return {
-          productId: cartItem.productId,
-          price: cartItem.price * cartItem.quantity,
-          quantity: cartItem.quantity,
-        };
-      }),
-    );
-
-    newPayload.productList = productlist;
-    newPayload.userId = payload.userId;
-    newPayload.phone_number = payload.phone_number;
-    newPayload.zip_code = payload.zip_code;
-    newPayload.street_name = payload.street_name;
-    newPayload.state_code = payload.state_code;
-    newPayload.locality = payload.locality;
-    newPayload.house_number = payload.house_number;
-    newPayload.given_name = payload.given_name;
-    newPayload.family_name = payload.family_name;
-    newPayload.country = payload.country;
-    newPayload.address2 = payload.address2;
-    newPayload.business = payload.business;
-
-
-    const totalAmount = productlist.reduce(
-      (acc, product) => acc + product.price,
-      0,
-    );
-    newPayload.totalAmount = totalAmount;
-    
-    if (!payload.shippingCost) {
-      throw new AppError(400, 'Shipping cost is required!');
-    } else {
-      payload.shippingCost = Number(payload.shippingCost);
+    if (!stripeAccountCompleted.isCompleted) {
+      throw new AppError(404, 'Seller Stripe Account is not Completed !!');
     }
-
-    console.log('newPayload with totalAmount==', newPayload);
-
-    const order = await Order.create([newPayload], { session });
-
-    if (!order[0]) {
-      throw new AppError(400, 'Failed to create order!');
-    }
-
-
 
     const paymentInfo = {
-      orderId: order[0]._id,
-      amount: order[0].totalAmount + payload.shippingCost,
-      cartIds: payload.cartIds,
+      orderId: order._id,
+      amount: totalPaymentAmount,
+      connectedAccountId: stripeAccountCompleted.accountId,
     };
 
-    console.log('======stripe payment', paymentInfo);
+    // console.log('======stripe payment');
     const checkoutResult: any = await createCheckout(
-      payload.userId,
+      payload.customerId,
       paymentInfo,
     );
 
@@ -144,17 +102,12 @@ const addPaymentService = async (payload: any) => {
       throw new AppError(400, 'Failed to create checkout session!');
     }
 
-    // Commit transaction
-    await session.commitTransaction();
-    session.endSession();
-    return checkoutResult;
-  } catch (error) {
-    console.error('Transaction Error:', error);
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
+  return checkoutResult;
 };
+
+
+
+
 
 const getAllPaymentService = async (query: Record<string, unknown>) => {
   const PaymentQuery = new QueryBuilder(Payment.find(), query)
@@ -222,7 +175,7 @@ const getAllIncomeRatio = async (year: number) => {
     {
       $group: {
         _id: { month: { $month: '$transactionDate' } },
-        totalIncome: { $sum: '$amount' },
+        totalIncome: { $sum: '$adminAmount' },
       },
     },
     {
@@ -351,7 +304,7 @@ const getAllIncomeRatio = async (year: number) => {
 //   return timeSlots;
 // };
 
-const getAllIncomeRatiobyDays = async (days: string) => {
+const getAllIncomeRatiobyDays = async (days: string, sellerId: string) => {
   const currentDay = new Date();
   let startDate: Date;
 
@@ -383,6 +336,7 @@ const getAllIncomeRatiobyDays = async (days: string) => {
   const incomeData = await Payment.aggregate([
     {
       $match: {
+        sellerId: new mongoose.Types.ObjectId(sellerId),
         transactionDate: { $gte: startDate, $lte: currentDay },
       },
     },
@@ -443,19 +397,6 @@ const getAllIncomeRatiobyDays = async (days: string) => {
 const createCheckout = async (userId: any, payload: any) => {
   console.log('stripe payment', payload);
   let session = {} as { id: string };
-
-  // const lineItems = products.map((product) => ({
-  //   price_data: {
-  //     currency: 'usd',
-  //     product_data: {
-  //       name: 'Order Payment',
-  //       description: 'Payment for user order',
-  //     },
-  //     unit_amount: Math.round(product.price * 100),
-  //   },
-  //   quantity: product.quantity,
-  // }));
-
   const lineItems = [
     {
       price_data: {
@@ -469,44 +410,41 @@ const createCheckout = async (userId: any, payload: any) => {
     },
   ];
 
-  console.log('lineItems=', lineItems);
+  const adminFeeAmount = Math.round(payload.amount * 0.1 * 100);
 
   const sessionData: any = {
     payment_method_types: ['card'],
     mode: 'payment',
-    success_url: `http://10.0.70.35:8078/api/v1/payment/success`,
-    cancel_url: `http://10.0.70.35:8078/api/v1/payment/cancel`,
+    success_url: `http://10.0.70.35:8084/api/v1/payment/success`,
+    cancel_url: `http://10.0.70.35:8084/api/v1/payment/cancel`,
     line_items: lineItems,
     metadata: {
-      userId: String(userId), // Convert userId to string
+      userId: String(userId), 
       orderId: String(payload.orderId),
-      // cartIds: payload.cartIds,
-      cartIds: JSON.stringify(payload.cartIds),
-      // products: payload,
+    },
+    payment_intent_data: {
+      application_fee_amount: adminFeeAmount,
+      transfer_data: {
+        destination: payload.connectedAccountId,
+      },
+      on_behalf_of: payload.connectedAccountId,
     },
   };
 
-  console.log('sessionData=', sessionData);
+
 
   try {
-    console.log('try session');
     session = await stripe.checkout.sessions.create(sessionData);
-    console.log('session==', session);
-
-    // console.log('session', session.id);
   } catch (error) {
     console.log('Error', error);
   }
-
-  console.log('try session 22');
-  // // console.log({ session });
+  
   const { id: session_id, url }: any = session || {};
-
-  console.log({ url });
-  // console.log({ url });
 
   return { url };
 };
+
+
 
 const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
   console.log('hit hise webhook controller servie');
@@ -528,10 +466,6 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
         }: SessionData = sessionData;
         const orderId = metadata?.orderId as string;
         const userId = metadata?.userId as string;
-        const cartIds = JSON.parse(metadata?.cartIds as any);
-        console.log('cartIds==', cartIds);
-
-        // session.metadata && (session.metadata.serviceBookingId as string);
         if (!paymentIntentId) {
           throw new AppError(
             httpStatus.BAD_REQUEST,
@@ -547,32 +481,46 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
           throw new AppError(httpStatus.BAD_REQUEST, 'Payment Not Successful');
         }
 
-        const orderHistory = [
-          {
-            status: 'completed',
-            date: new Date(),
-          },
-          {
-            status: 'recived',
-            date: '',
-          },
-          {
-            status: 'ongoing',
-            date: '',
-          },
-          {
-            status: 'delivery',
-            date: '',
-          },
-          {
-            status: 'finished',
-            date: '',
-          },
-        ];
+       
+
+          const adminAmount = Math.round(paymentIntent.amount_received * 0.1) / 100;
+          const mainAmount = (paymentIntent.amount_received ) / 100;
+
+          const orderdata = await Order.findById(orderId).session(session);
+          if (!orderdata) {
+            throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
+          }
+
+
+            const paymentData: any = {
+              customerId: userId,
+              sellerId: orderdata?.sellerId,
+              amount: mainAmount - adminAmount,
+              adminAmount: adminAmount,
+              method: 'stripe',
+              transactionId: paymentIntentId,
+              orderId: orderdata?._id,
+              status: 'paid',
+              session_id: sessionId,
+              transactionDate: new Date(),
+            };
+
+            const payment = await Payment.create([paymentData], { session });
+            console.log('===payment', payment);
+
+            if (!payment) {
+              throw new AppError(
+                httpStatus.BAD_REQUEST,
+                'Payment record creation failed',
+              );
+            }
+
+
+
 
         const order = await Order.findByIdAndUpdate(
           orderId,
-          { paymentStatus: 'paid', status: 'completed', history: orderHistory },
+          { paymentStatus: 'paid' },
           { new: true, session },
         );
 
@@ -596,8 +544,7 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
 
             const updatedProduct = await Product.findOneAndUpdate(
               {
-                _id: product.productId,
-                availableStock: { $gte: product.quantity },
+                _id: product.productId
               }, 
               { $inc: { availableStock: -product.quantity } }, 
               { new: true, session },
@@ -606,44 +553,7 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
             if (!updatedProduct) {
               throw new AppError(403, 'Insufficient stock after retry');
             }
-
-            // singleProduct.availableStock -= product.quantity;
-            // await singleProduct.save({ session });
-
             return updatedProduct;
-          }),
-        );
-
-        console.log('===order', order);
-
-        const paymentData: any = {
-          userId: userId,
-          amount: order?.totalAmount,
-          method: 'stripe',
-          transactionId: paymentIntentId,
-          orderId: order?._id,
-          status: 'paid',
-          session_id: sessionId,
-          transactionDate: order?.orderDate,
-        };
-
-        const payment = await Payment.create([paymentData], { session });
-        console.log('===payment', payment);
-
-        if (!payment) {
-          throw new AppError(
-            httpStatus.BAD_REQUEST,
-            'Payment record creation failed',
-          );
-        }
-
-        const deletedCartProducts = await Promise.all(
-          cartIds.map(async (cartProductId: any) => {
-            const isDelete =
-              await Cart.findByIdAndDelete(cartProductId).session(session);
-            if (!isDelete) {
-              throw new AppError(404, 'Failed to delete cart product');
-            }
           }),
         );
 
@@ -659,25 +569,23 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
           type: 'success',
         };
 
-        const [notification, notification1] = await Promise.all([
+        const notificationData2 = {
+          userId: order.sellerId,
+          message: 'New Order create successfull!!',
+          type: 'success',
+        };
+
+        const [notification, notification1, notification2] = await Promise.all([
           notificationService.createNotification(notificationData),
           notificationService.createNotification(notificationData1),
+          notificationService.createNotification(notificationData2),
         ]);
 
-        if (!notification || !notification1) {
+        if (!notification || !notification1 || !notification2) {
           throw new AppError(404, 'Notification create faild!!');
         }
 
-        const deletedServiceBookings = await Order.deleteMany(
-          {
-            userId,
-            status: 'pending',
-          },
-          { session },
-        );
-        console.log('deletedServiceBookings', deletedServiceBookings);
-
-        
+  
 
         await session.commitTransaction();
         session.endSession();
@@ -793,82 +701,106 @@ const getAllEarningRatio = async (year: number, businessId: string) => {
   return months;
 };
 
-// const refreshAccountConnect = async (
-//   id: string,
-//   host: string,
-//   protocol: string,
-// ): Promise<string> => {
-//   const onboardingLink = await stripe.accountLinks.create({
-//     account: id,
-//     refresh_url: `${protocol}://${host}/api/v1/payment/refreshAccountConnect/${id}`,
-//     return_url: `${protocol}://${host}/api/v1/payment/success-account/${id}`,
-//     type: 'account_onboarding',
-//   });
-//   return onboardingLink.url;
-// };
 
-// const createStripeAccount = async (
-//   user: any,
-//   host: string,
-//   protocol: string,
-// ): Promise<any> => {
-//   // console.log('user',user);
-//   const existingAccount = await StripeAccount.findOne({
-//     userId: user.userId,
-//   }).select('user accountId isCompleted');
-//   // console.log('existingAccount', existingAccount);
+const refreshAccountConnect = async (
+  id: string,
+  host: string,
+  protocol: string,
+): Promise<string> => {
+  const onboardingLink = await stripe.accountLinks.create({
+    account: id,
+    refresh_url: `${protocol}://${host}/api/v1/payment/refreshAccountConnect/${id}`,
+    return_url: `${protocol}://${host}/api/v1/payment/success-account/${id}`,
+    type: 'account_onboarding',
+  });
+  return onboardingLink.url;
+};
 
-//   if (existingAccount) {
-//     if (existingAccount.isCompleted) {
-//       return {
-//         success: false,
-//         message: 'Account already exists',
-//         data: existingAccount,
-//       };
-//     }
+const createStripeAccount = async (
+  user: any,
+  host: string,
+  protocol: string,
+): Promise<any> => {
+  // console.log('user',user);
+  const existingAccount = await StripeAccount.findOne({
+    userId: user.userId,
+  }).select('user accountId isCompleted');
+  // console.log('existingAccount', existingAccount);
 
-//     const onboardingLink = await stripe.accountLinks.create({
-//       account: existingAccount.accountId,
-//       refresh_url: `${protocol}://${host}/api/v1/payment/refreshAccountConnect/${existingAccount.accountId}`,
-//       return_url: `${protocol}://${host}/api/v1/payment/success-account/${existingAccount.accountId}`,
-//       type: 'account_onboarding',
-//     });
-//     // console.log('onboardingLink-1', onboardingLink);
+  if (existingAccount) {
+    if (existingAccount.isCompleted) {
+      return {
+        success: false,
+        message: 'Account already exists',
+        data: existingAccount,
+      };
+    }
 
-//     return {
-//       success: true,
-//       message: 'Please complete your account',
-//       url: onboardingLink.url,
-//     };
-//   }
+    const onboardingLink = await stripe.accountLinks.create({
+      account: existingAccount.accountId,
+      refresh_url: `${protocol}://${host}/api/v1/payment/refreshAccountConnect/${existingAccount.accountId}`,
+      return_url: `${protocol}://${host}/api/v1/payment/success-account/${existingAccount.accountId}`,
+      type: 'account_onboarding',
+    });
+    // console.log('onboardingLink-1', onboardingLink);
 
-//   const account = await stripe.accounts.create({
-//     type: 'express',
-//     email: user.email,
-//     country: 'US',
-//     capabilities: {
-//       card_payments: { requested: true },
-//       transfers: { requested: true },
-//     },
-//   });
-//   // console.log('stripe account', account);
+    return {
+      success: true,
+      message: 'Please complete your account',
+      url: onboardingLink.url,
+    };
+  }
 
-//   await StripeAccount.create({ accountId: account.id, userId: user.userId });
+  const account = await stripe.accounts.create({
+    type: 'express',
+    email: user.email,
+    country: 'US',
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
+  });
+  // console.log('stripe account', account);
 
-//   const onboardingLink = await stripe.accountLinks.create({
-//     account: account.id,
-//     refresh_url: `${protocol}://${host}/api/v1/payment/refreshAccountConnect/${account.id}`,
-//     return_url: `${protocol}://${host}/api/v1/payment/success-account/${account.id}`,
-//     type: 'account_onboarding',
-//   });
-//   // console.log('onboardingLink-2', onboardingLink);
+  await StripeAccount.create({ accountId: account.id, userId: user.userId });
 
-//   return {
-//     success: true,
-//     message: 'Please complete your account',
-//     url: onboardingLink.url,
-//   };
-// };
+  const onboardingLink = await stripe.accountLinks.create({
+    account: account.id,
+    refresh_url: `${protocol}://${host}/api/v1/payment/refreshAccountConnect/${account.id}`,
+    return_url: `${protocol}://${host}/api/v1/payment/success-account/${account.id}`,
+    type: 'account_onboarding',
+  });
+  // console.log('onboardingLink-2', onboardingLink);
+
+  return {
+    success: true,
+    message: 'Please complete your account',
+    url: onboardingLink.url,
+  };
+};
+
+const stripeConnectedAccountLoginQuery = async (landlordUserId: string) => {
+  console.log('completed account hit hoise');
+  const isExistaccount = await StripeAccount.findOne({
+    userId: landlordUserId,
+    isCompleted: true,
+  });
+
+  if (!isExistaccount) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Account Not Found!!');
+  }
+  if (!isExistaccount.isCompleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Account Created not Completed');
+  }
+
+  const account = await stripe.accounts.createLoginLink(
+    isExistaccount.accountId,
+  );
+
+  return account;
+};
+
+
 
 // const transferBalanceService = async (
 //   accountId: string,
@@ -957,7 +889,8 @@ export const paymentService = {
   //   paymentRefundService,
   //   filterBalanceByPaymentMethod,
   //   filterWithdrawBalanceByPaymentMethod,
-  //   createStripeAccount,
-  //   refreshAccountConnect,
+  createStripeAccount,
+  stripeConnectedAccountLoginQuery,
+  refreshAccountConnect,
   //   transferBalanceService,
 };

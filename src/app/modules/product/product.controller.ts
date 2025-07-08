@@ -19,6 +19,7 @@ const createProduct = catchAsync(async (req, res) => {
   if (isExist) {
     throw new AppError(400, 'Product already exist !');
   }
+  
   productData.availableStock = Number(productData.stock);
   productData.stock =Number(productData.stock);
   productData.price = Number(productData.price);
@@ -75,6 +76,21 @@ const getAllProductBySeller = catchAsync(async (req, res) => {
   });
 });
 
+const getAllProductOverviewBySeller = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const  result= await productService.getAllProductOverviewBySellerQuery(
+    req.query,
+    userId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Seller Overview are requered successful!!',
+  });
+});
+
 const getSingleProduct = catchAsync(async (req, res) => {
     const {userId} = req.user;
   const result = await productService.getSingleProductQuery(req.params.id, userId);
@@ -87,8 +103,23 @@ const getSingleProduct = catchAsync(async (req, res) => {
   });
 });
 
+const getBestSellingProduct = catchAsync(async (req, res) => {
+    const {userId} = req.user;
+  const result = await productService.getBestSellingProductQuery(
+    userId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    data: result,
+    message: 'Best Selling Product are requered successful!!',
+  });
+});
+
 const updateSingleProduct = catchAsync(async (req, res) => {
     const {id} = req.params;
+    const {userId} = req.user;
     const updateData = req.body;
       let remainingUrl = updateData?.remainingUrl || null;
     const imageFiles = req.files as {
@@ -114,7 +145,9 @@ const updateSingleProduct = catchAsync(async (req, res) => {
      updateData.price = Number(updateData.price);
      updateData.availableStock = Number(updateData.availableStock);
 
-  const result = await productService.updateSingleProductQuery(id, updateData);
+     console.log('updateData', updateData);
+
+  const result = await productService.updateSingleProductQuery(id, updateData, userId);
 
   sendResponse(res, {
     success: true,
@@ -125,7 +158,8 @@ const updateSingleProduct = catchAsync(async (req, res) => {
 });
 
 const deleteSingleProduct = catchAsync(async (req, res) => {
-  const result = await productService.deletedProductQuery(req.params.id);
+  const {userId} = req.user;
+  const result = await productService.deletedProductQuery(req.params.id, userId);
 
   sendResponse(res, {
     success: true,
@@ -139,7 +173,9 @@ export const productController = {
   createProduct,
   getAllProduct,
   getAllProductBySeller,
+  getAllProductOverviewBySeller,
   getSingleProduct,
+  getBestSellingProduct,
   updateSingleProduct,
   deleteSingleProduct,
 };

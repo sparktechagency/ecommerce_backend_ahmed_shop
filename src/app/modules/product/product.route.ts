@@ -18,7 +18,21 @@ productRouter
     productController.createProduct,
   )
   .get('/', productController.getAllProduct)
-  .get('/sellers', auth(USER_ROLE.SELLER), productController.getAllProductBySeller)
+  .get(
+    '/seller',
+    auth(USER_ROLE.SELLER),
+    productController.getAllProductBySeller,
+  )
+  .get(
+    '/best-selling',
+    auth(USER_ROLE.SELLER),
+    productController.getBestSellingProduct,
+  )
+  .get(
+    '/overview',
+    auth(USER_ROLE.SELLER),
+    productController.getAllProductOverviewBySeller,
+  )
   .get(
     '/:id',
     auth(USER_ROLE.CUSTOMER, USER_ROLE.SELLER),
@@ -27,7 +41,7 @@ productRouter
   .patch(
     '/:id',
     auth(USER_ROLE.SELLER),
-    upload.fields([{ name: 'images', maxCount: 1 }]),
+    upload.fields([{ name: 'images', maxCount: 5 }]),
     productController.updateSingleProduct,
   )
   .delete(

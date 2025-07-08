@@ -10,7 +10,7 @@ const chatRouter = Router();
 
 chatRouter.get(
   '/',
-  auth(USER_ROLE.CUSTOMER, USER_ROLE.BUSINESS),
+  auth(USER_ROLE.CUSTOMER, USER_ROLE.SELLER),
   chatController.getAllChats,
 );
 

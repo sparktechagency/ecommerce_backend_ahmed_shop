@@ -1,9 +1,9 @@
 
-export type TShipmentApi = {
-  shippingbookingId: string;
-};
+// export type TShipmentApi = {
+//   shippingbookingId: string;
+// };
 
 
-export type TShipmentRequestApi = {
-  shipmentRequestId: string;
-};
+// export type TShipmentRequestApi = {
+//   shipmentRequestId: string;
+// };

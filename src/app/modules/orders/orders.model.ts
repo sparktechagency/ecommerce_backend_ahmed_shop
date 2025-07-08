@@ -2,9 +2,38 @@ import { Schema, model, Types } from 'mongoose';
 import { TOrder, TProductLish } from './orders.interface';
 
 const ProductLishSchema = new Schema<TProductLish>({
-  productId: { type: Schema.Types.ObjectId, required: true, ref: 'Product' },
-  price: { type: Number, required: true },
-  quantity: { type: Number, required: true },
+  productId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+  sellerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  customerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    default: 1,
+  },
+  offer: {
+    type: Number,
+    required: true,
+  },
+  weight: {
+    type: Number,
+    required: true,
+  },
 });
 
 const historyEntrySchema = new Schema({
@@ -14,7 +43,9 @@ const historyEntrySchema = new Schema({
 
 const OrderSchema = new Schema<TOrder>(
   {
-    userId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    customerId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    sellerId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    shopId: { type: Schema.Types.ObjectId, required: true, ref: 'Shop' },
     productList: { type: [ProductLishSchema], required: true },
     totalAmount: { type: Number, required: true },
     orderDate: { type: Date, required: true },
@@ -44,11 +75,8 @@ const OrderSchema = new Schema<TOrder>(
     state_code: { type: String, required: true },
     locality: { type: String, required: true },
     house_number: { type: String, required: true },
-    given_name: { type: String, required: true },
-    family_name: { type: String, required: true },
     country: { type: String, required: true },
-    business: { type: String, required: true },
-    address2: { type: String, required: true },
+    address: { type: String, required: true },
     history: {
       type: [historyEntrySchema],
       required: false,
@@ -57,6 +85,4 @@ const OrderSchema = new Schema<TOrder>(
   { timestamps: true },
 );
 
-const Order = model<TOrder>('Order', OrderSchema);
-
-export { Order };
+export const Order = model<TOrder>('Order', OrderSchema);

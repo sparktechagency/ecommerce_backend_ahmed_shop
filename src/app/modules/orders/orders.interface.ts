@@ -1,13 +1,20 @@
 import { Types } from 'mongoose';
 
 export type TProductLish = {
-  productId: Types.ObjectId;
-  price: Number;
-  quantity: Number;
+   productId: Types.ObjectId;
+   sellerId: Types.ObjectId;
+   customerId: Types.ObjectId;
+   price: number;
+   quantity: number;
+   offer: number;
+   weight: number;
+ 
 };
 
 export type TOrder = {
-  userId: Types.ObjectId;
+  customerId: Types.ObjectId;
+  sellerId: Types.ObjectId;
+  shopId: Types.ObjectId;
   productList: [TProductLish];
   totalAmount: Number;
   orderDate: Date;
@@ -26,9 +33,6 @@ export type TOrder = {
   state_code: string;
   locality: string;
   house_number: string;
-  given_name: string;
-  family_name: string;
   country: string;
-  business: string;
-  address2: string;
+  address: string;
 };

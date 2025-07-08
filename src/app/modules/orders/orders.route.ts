@@ -8,16 +8,18 @@ import { orderController } from './orders.controller';
 const orderRouter = express.Router();
 
 orderRouter
-  .get('/', 
-    // auth(USER_ROLE.ADMIN), 
-    orderController.getAllOrder)
-  .get('/user', auth(USER_ROLE.USER), orderController.getAllOrderByUser)
+  .post('/create-order', auth(USER_ROLE.CUSTOMER), orderController.createOrder)
+  .get(
+    '/',
+    auth(USER_ROLE.CUSTOMER, USER_ROLE.SELLER),
+    orderController.getAllOrderByCustomerAndSeller,
+  )
   .get('/:id', orderController.getSingleOrder)
-  .patch('/:id', orderController.updateSingleOrderStatus)
-  .delete(
+  .patch(
     '/:id',
-    // auth(USER_ROLE.ADMIN, USER_ROLE.SUB_ADMIN),
-    orderController.deleteSingleOrder,
-  );
+    auth(USER_ROLE.SELLER),
+    orderController.updateSingleOrderStatus,
+  )
+  .delete('/:id', auth(USER_ROLE.CUSTOMER), orderController.deleteSingleOrder);
 
 export default orderRouter;

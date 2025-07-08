@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 
 export  type TProduct = {
   sellerId: Types.ObjectId;
+  shopId: Types.ObjectId;
   categoryId: Types.ObjectId;
   categoryName: string;
   name: string;
@@ -21,4 +22,5 @@ export  type TProduct = {
   // height: string;
   // width: string;
   isDeleted: boolean;
+  isOffer?: Types.ObjectId;
 };

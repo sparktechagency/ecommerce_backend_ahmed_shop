@@ -4,7 +4,12 @@ import { TProduct } from "./product.interface";
 const productSchema = new Schema<TProduct>(
   {
     sellerId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
-    categoryId: { type: Schema.Types.ObjectId, required: true, ref: 'Category' },
+    shopId: { type: Schema.Types.ObjectId, required: true, ref: 'Shop' },
+    categoryId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      ref: 'Category',
+    },
     categoryName: { type: String, required: true },
     name: { type: String, required: true },
     details: { type: String, required: true },
@@ -42,6 +47,11 @@ const productSchema = new Schema<TProduct>(
     // height: { type: String, required: true },
     // width: { type: String, required: true },
     isDeleted: { type: Boolean, required: true, default: false },
+    isOffer: {
+      type: Schema.Types.ObjectId,
+      ref: 'Offer',
+      default: null,
+    },
   },
   { timestamps: true },
 );

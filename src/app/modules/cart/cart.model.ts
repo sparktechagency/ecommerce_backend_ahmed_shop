@@ -7,9 +7,19 @@ const cartSchema = new Schema<TCart>({
     ref: 'Product',
     required: true,
   },
-  userId: {
+  sellerId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
+    required: true,
+  },
+  customerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  shopId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Shop',
     required: true,
   },
   price: {
@@ -20,6 +30,14 @@ const cartSchema = new Schema<TCart>({
     type: Number,
     required: true,
     default: 1,
+  },
+  offer: {
+    type: Number,
+    required: true,
+  },
+  weight: {
+    type: Number,
+    required: true,
   },
 });
 

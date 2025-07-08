@@ -7,7 +7,7 @@ import AppError from '../../error/AppError';
 const createCart = catchAsync(async (req, res) => {
   const cartData = req.body;
   const {userId} = req.user;
-  cartData.userId = userId;
+  cartData.customerId = userId;
 
 
 
@@ -59,7 +59,8 @@ const singleCartProductQuantityUpdate = catchAsync(async (req, res) => {
 });
 
 const deleteSingleCart = catchAsync(async (req, res) => {
-  const result = await cartService.deletedCartQuery(req.params.id);
+  const {userId} = req.user;
+  const result = await cartService.deletedCartQuery(req.params.id, userId);
 
   sendResponse(res, {
     success: true,
