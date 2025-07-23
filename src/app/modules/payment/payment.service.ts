@@ -70,8 +70,7 @@ const addPaymentService = async (payload: any) => {
     return singleProduct
   })
 
-  const totalPaymentAmount =
-    Number(order.totalAmount) + Number(payload.shippingCost);
+  const totalPaymentAmount = Number(order.totalAmount);
 
     console.log('totalPaymentAmount', totalPaymentAmount);
 
@@ -91,6 +90,7 @@ const addPaymentService = async (payload: any) => {
       orderId: order._id,
       amount: totalPaymentAmount,
       connectedAccountId: stripeAccountCompleted.accountId,
+      shippingCost: payload.shippingCost
     };
 
     // console.log('======stripe payment');
@@ -433,6 +433,7 @@ const createCheckout = async (userId: any, payload: any) => {
   ];
 
   const adminFeeAmount = Math.round(payload.amount * 0.1 * 100);
+  const totalAmount = payload.shippingCost * 100 + adminFeeAmount;
 
   const sessionData: any = {
     payment_method_types: ['card'],
@@ -445,7 +446,7 @@ const createCheckout = async (userId: any, payload: any) => {
       orderId: String(payload.orderId),
     },
     payment_intent_data: {
-      application_fee_amount: adminFeeAmount,
+      application_fee_amount: totalAmount,
       transfer_data: {
         destination: payload.connectedAccountId,
       },
@@ -803,7 +804,7 @@ const createStripeAccount = async (
 
 
   // console.log('onboardingLink-2', onboardingLink);
-  
+
 
   return {
     success: true,
