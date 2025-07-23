@@ -2,14 +2,7 @@ import axios from 'axios';
 import Product from '../product/product.model';
 import config from '../../config';
 
-// Credentials
-// const UPS_CLIENT_ID = 'P3ucR6snAt3SAom8lDgxH8cGqDU2c9M2aok3chejxEykzCUi'; // old
-// const UPS_CLIENT_SECRET =
-//   'xroU0PhU67kwvd8fA8Qi9XGrtSIPtLqwjDfF3ZKuhiFXBaZXPDYpbE9Ww6ewUAYe'; // old
 
-const UPS_CLIENT_ID = 'OtTaoIrv6WFvllB9H91zHTTVtQ2teUHw0kVv8vguuVMirRV3';
-const UPS_CLIENT_SECRET =
-  'HRW8hN3hNDvayeTAH90fTAwgtz2BJaW6BIVhVrGSvIAnEYQ8qVAcuunmDtarqfBk';
 const UPS_OAUTH_TOKEN_URL = `${config.shipment_url}/security/v1/oauth/token`;
 // const UPS_OAUTH_TOKEN_URL = 'https://wwwcie.ups.com/security/v1/oauth/token';
 
