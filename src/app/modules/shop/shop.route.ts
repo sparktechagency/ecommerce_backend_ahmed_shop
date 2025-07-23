@@ -10,6 +10,10 @@ const upload = fileUpload('./public/uploads/shop');
 shopRouter
   .post(
     '/create-shop',
+    ((req, res, next) => {
+      console.log('hit hoise route');
+      next();
+    }),
     auth(USER_ROLE.SELLER),
     upload.fields([
       { name: 'image', maxCount: 1 },

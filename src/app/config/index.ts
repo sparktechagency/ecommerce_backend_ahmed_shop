@@ -14,6 +14,15 @@ const stripe = {
   stripe_api_secret: process.env.STRIPE_API_SECRET,
 };
 
+const super_admin = {
+  email: process.env.SUPER_ADMIN_EMAIL,
+  password: process.env.SUPER_ADMIN_PASSWORD,
+};
+const ups_shipment_info = {
+  ups_client_id: process.env.UPS_CLIENT_ID,
+  ups_client_secret: process.env.UPS_CLIENT_SECRET,
+};
+
 export default {
   NODE_ENV: process.env.NODE_ENV,
   port: process.env.PORT,
@@ -32,11 +41,14 @@ export default {
   otp_token_expire_time: process.env.OTP_TOKEN_EXPIRE_TIME,
   socket_port: process.env.SOCKET_PORT,
   stripe_secret: process.env.STRIPE_API_SECRET,
+  shipment_url: process.env.SHIPMENT_URL,
   // stripe_key: process.env.STRIPE_API_KEY,
   WEBHOOK: process.env.WEBHOOK || '',
   aws,
   stripe,
   googleApiKey: process.env.GOOGLEAPI,
   shipment_key: process.env.SHIPMENT_KEY,
+  super_admin,
+  ups_shipment_info,
   // user_jwt_token: process.env.USER_JWT_TOKEN,
 };

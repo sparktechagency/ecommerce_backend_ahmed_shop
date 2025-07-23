@@ -6,5 +6,6 @@ export type TShop = {
   description: string;
   image: string;
   document: string;
+  address: string;
   status: string;
 };

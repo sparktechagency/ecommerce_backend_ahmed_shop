@@ -24,6 +24,11 @@ productRouter
     productController.getAllProductBySeller,
   )
   .get(
+    '/all-product-for-offer',
+    auth(USER_ROLE.SELLER),
+    productController.getAllProductByOfferBySeller,
+  )
+  .get(
     '/best-selling',
     auth(USER_ROLE.SELLER),
     productController.getBestSellingProduct,

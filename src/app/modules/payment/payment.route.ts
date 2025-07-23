@@ -39,6 +39,11 @@ paymentRouter
     // auth(USER_ROLE.ADMIN),
     paymentController.getAllPayment,
   )
+  .get(
+    '/user',
+    auth(USER_ROLE.SELLER),
+    paymentController.getAllPaymentBySeller,
+  )
   // .get('/payment-tracking', auth(USER_ROLE.CUSTOMER), paymentController.getAllPaymentByCustomer)
   .get('/all-income-rasio', paymentController.getAllIncomeRasio)
   .get(

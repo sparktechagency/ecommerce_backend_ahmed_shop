@@ -9,4 +9,7 @@ import { Types } from "mongoose"
    quantity: number;
    offer: number;
    weight: number;
+   height: number;
+   width: number;
+   length: number;
  };

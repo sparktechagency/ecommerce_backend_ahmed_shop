@@ -1,14 +1,16 @@
 import { Types } from 'mongoose';
 
 export type TProductLish = {
-   productId: Types.ObjectId;
-   sellerId: Types.ObjectId;
-   customerId: Types.ObjectId;
-   price: number;
-   quantity: number;
-   offer: number;
-   weight: number;
- 
+  productId: Types.ObjectId;
+  sellerId: Types.ObjectId;
+  customerId: Types.ObjectId;
+  price: number;
+  quantity: number;
+  offer: number;
+  weight: number;
+  height: number;
+  width: number;
+  length: number;
 };
 
 export type TOrder = {
@@ -20,19 +22,19 @@ export type TOrder = {
   orderDate: Date;
   status: string;
   paymentStatus: string;
-  history: [
-    {
-      status: string;
-      date: Date;
-    },
-  ];
+  // history: [
+  //   {
+  //     status: string;
+  //     date: Date;
+  //   },
+  // ];
 
   phone_number: string;
-  zip_code: string;
-  street_name: string;
+  postal_code: string;
   state_code: string;
-  locality: string;
-  house_number: string;
-  country: string;
-  address: string;
+  city: string;
+  address_line1: string;
+  country_code: string;
+  address_line2: string;
+  tacking_number: string;
 };

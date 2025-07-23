@@ -23,6 +23,10 @@ const createProduct = catchAsync(async (req, res) => {
   productData.availableStock = Number(productData.stock);
   productData.stock =Number(productData.stock);
   productData.price = Number(productData.price);
+  productData.height = Number(productData.height);
+  productData.width = Number(productData.width);
+  productData.length = Number(productData.length);
+  productData.weight = Number(productData.weight);
   const imageFiles = req.files as {
     [fieldname: string]: Express.Multer.File[];
   };
@@ -73,6 +77,23 @@ const getAllProductBySeller = catchAsync(async (req, res) => {
     meta: meta,
     data: result,
     message: ' All Product are requered successful!!',
+  });
+});
+
+
+const getAllProductByOfferBySeller = catchAsync(async (req, res) => {
+  const { userId } = req.user;
+  const { meta, result } = await productService.getAllProductByOfferBySellerQuery(
+    req.query,
+    userId,
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    meta: meta,
+    data: result,
+    message: ' All Product for offer are requered successful!!',
   });
 });
 
@@ -173,6 +194,7 @@ export const productController = {
   createProduct,
   getAllProduct,
   getAllProductBySeller,
+  getAllProductByOfferBySeller,
   getAllProductOverviewBySeller,
   getSingleProduct,
   getBestSellingProduct,

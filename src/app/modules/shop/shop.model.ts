@@ -16,6 +16,10 @@ const shopSchema = new Schema<TShop>(
       type: String,
       required: true,
     },
+    address: {
+      type: String,
+      required: true,
+    },
     image: {
       type: String,
       required: [true, 'Images are required'],

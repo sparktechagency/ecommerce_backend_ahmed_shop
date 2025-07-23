@@ -15,6 +15,9 @@ const createCartService = async (payload: TCart) => {
   console.log('isProductExist', isProductExist);
   
   payload.weight = Number(isProductExist.weight); 
+  payload.height = Number(isProductExist.height); 
+  payload.width = Number(isProductExist.width); 
+  payload.length = Number(isProductExist.length); 
   payload.sellerId = isProductExist.sellerId;
   console.log('payload', payload);
 

@@ -11,6 +11,7 @@ import Product from '../product/product.model';
 import { Order } from '../orders/orders.model';
 import { notificationService } from '../notification/notification.service';
 import { TProduct } from '../product/product.interface';
+import { shippingService } from '../shipmentApi/shipmentApi.service';
 type SessionData = Stripe.Checkout.Session;
 
 // console.log({ first: config.stripe.stripe_api_secret });
@@ -109,8 +110,29 @@ const addPaymentService = async (payload: any) => {
 
 
 
-const getAllPaymentService = async (query: Record<string, unknown>) => {
-  const PaymentQuery = new QueryBuilder(Payment.find(), query)
+const getAllPaymentService = async (
+  query: Record<string, unknown>,
+) => {
+  const PaymentQuery = new QueryBuilder(Payment.find({}), query)
+    .search(['name'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await PaymentQuery.modelQuery;
+  const meta = await PaymentQuery.countTotal();
+  return { meta, result };
+};
+
+const getAllPaymentBySellerService = async (
+  query: Record<string, unknown>,
+  userId: string,
+) => {
+  const PaymentQuery = new QueryBuilder(
+    Payment.find({ sellerId: userId }),
+    query,
+  )
     .search(['name'])
     .filter()
     .sort()
@@ -256,7 +278,7 @@ const getAllIncomeRatio = async (year: number) => {
 //                     format: '%Y-%m-%dT%H:00:00',
 //                     date: '$transactionDate',
 //                   },
-//                 },
+//                 }, 
 //               },
 //         totalIncome: { $sum: '$amount' },
 //       },
@@ -415,11 +437,11 @@ const createCheckout = async (userId: any, payload: any) => {
   const sessionData: any = {
     payment_method_types: ['card'],
     mode: 'payment',
-    success_url: `http://10.0.70.35:8084/api/v1/payment/success`,
-    cancel_url: `http://10.0.70.35:8084/api/v1/payment/cancel`,
+    success_url: `http://10.10.7.30:5003/api/v1/payment/success`,
+    cancel_url: `http://10.10.7.30:5003/api/v1/payment/cancel`,
     line_items: lineItems,
     metadata: {
-      userId: String(userId), 
+      userId: String(userId),
       orderId: String(payload.orderId),
     },
     payment_intent_data: {
@@ -451,6 +473,7 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
 
   const session = await mongoose.startSession();
   session.startTransaction();
+  let transactionCommitted = false;
 
   try {
     switch (event.type) {
@@ -557,6 +580,10 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
           }),
         );
 
+
+       const shipment =
+         await shippingService.createShippingRequestService(order._id);
+
         const notificationData = {
           userId: userId,
           message: 'Order create successfull!!',
@@ -588,6 +615,7 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
   
 
         await session.commitTransaction();
+        transactionCommitted = true;
         session.endSession();
         console.log('Payment completed successfully:', {
           sessionId,
@@ -630,7 +658,9 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
     }
   } catch (err) {
     console.error('Error processing webhook event:', err);
-    await session.abortTransaction();
+    if (!transactionCommitted) {
+      await session.abortTransaction();
+    }
     session.endSession();
   }
 };
@@ -770,7 +800,10 @@ const createStripeAccount = async (
     return_url: `${protocol}://${host}/api/v1/payment/success-account/${account.id}`,
     type: 'account_onboarding',
   });
+
+
   // console.log('onboardingLink-2', onboardingLink);
+  
 
   return {
     success: true,
@@ -878,6 +911,7 @@ const stripeConnectedAccountLoginQuery = async (landlordUserId: string) => {
 export const paymentService = {
   addPaymentService,
   getAllPaymentService,
+  getAllPaymentBySellerService,
   singlePaymentService,
   deleteSinglePaymentService,
   getAllPaymentByCustomerService,

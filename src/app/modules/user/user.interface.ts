@@ -16,8 +16,12 @@ export interface TUserCreate {
   password: string;
   phone: string;
   role: (typeof USER_ROLE)[keyof typeof USER_ROLE];
-  address: string;
-  
+  postal_code: string;
+  state_code: string;
+  city: string;
+  address_line1: string;
+  country_code: string;
+  address_line2: string;
 }
 
 export interface TUser extends TUserCreate {

@@ -34,12 +34,24 @@ const ProductLishSchema = new Schema<TProductLish>({
     type: Number,
     required: true,
   },
+  height: {
+    type: Number,
+    required: true,
+  },
+  width: {
+    type: Number,
+    required: true,
+  },
+  length: {
+    type: Number,
+    required: true,
+  },
 });
 
-const historyEntrySchema = new Schema({
-  status: { type: String, required: true },
-  date: { type: Date, required: false,  },
-});
+// const historyEntrySchema = new Schema({
+//   status: { type: String, required: true },
+//   date: { type: Date, required: false,  },
+// });
 
 const OrderSchema = new Schema<TOrder>(
   {
@@ -70,17 +82,17 @@ const OrderSchema = new Schema<TOrder>(
       default: 'pending',
     },
     phone_number: { type: String, required: true },
-    zip_code: { type: String, required: true },
-    street_name: { type: String, required: true },
+    postal_code: { type: String, required: true },
     state_code: { type: String, required: true },
-    locality: { type: String, required: true },
-    house_number: { type: String, required: true },
-    country: { type: String, required: true },
-    address: { type: String, required: true },
-    history: {
-      type: [historyEntrySchema],
-      required: false,
-    },
+    country_code: { type: String, required: true },
+    address_line1: { type: String, required: true },
+    address_line2: { type: String, required: true },
+    city: { type: String, required: true },
+    tacking_number: { type: String, required: false },
+    // history: {
+    //   type: [historyEntrySchema],
+    //   required: false,
+    // },
   },
   { timestamps: true },
 );

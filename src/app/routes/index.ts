@@ -16,7 +16,7 @@ import orderRouter from '../modules/orders/orders.route';
 import favoriteProductRoutes from '../modules/favorite/favorite.route';
 import faqRouter from '../modules/faq/faq.route';
 import cartRouter from '../modules/cart/cart.route';
-// import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
+import shippingRouter from '../modules/shipmentApi/shipmentApi.route';
 import pickupAddressRouter from '../modules/pickupAddress/pickupAddress.route';
 import categoryRoutes from '../modules/category/category.route';
 import offerRouter from '../modules/offer/offer.route';
@@ -100,10 +100,10 @@ const moduleRoutes = [
     path: '/faq',
     route: faqRouter,
   },
-  // {
-  //   path: '/shipping',
-  //   route: shippingRouter,
-  // },
+  {
+    path: '/shipping',
+    route: shippingRouter,
+  },
   {
     path: '/pickup-address',
     route: pickupAddressRouter,

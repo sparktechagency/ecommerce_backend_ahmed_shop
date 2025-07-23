@@ -31,9 +31,9 @@ const userSchema = new Schema<TUser>(
     phone: {
       type: String,
       required: false,
-      default: '',
+      default: null,
     },
-    
+
     isActive: {
       type: Boolean,
       default: true,
@@ -42,13 +42,12 @@ const userSchema = new Schema<TUser>(
       type: Boolean,
       default: false,
     },
-    address: {
-      type: String,
-      required: false,
-      default: '',
-    },
-    
-    
+    postal_code: { type: String, required: false, default: null },
+    state_code: { type: String, required: false, default: null },
+    country_code: { type: String, required: false, default: null },
+    address_line1: { type: String, required: false, default: null },
+    address_line2: { type: String, required: false, default: null },
+    city: { type: String, required: false, default: null },
   },
   {
     timestamps: true,

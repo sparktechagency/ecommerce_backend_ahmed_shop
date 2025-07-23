@@ -39,6 +39,7 @@ const orderCreateService = async (payload: any) => {
 
   const separateOrders = Object.entries(groupedOrders).map(
     ([sellerId, items]: any) => {
+      console.log('items==', items);
       return {
         sellerId,
         shopId: items[0].shopId,
@@ -48,36 +49,12 @@ const orderCreateService = async (payload: any) => {
         orderDate: new Date(),
         status: 'completed',
         phone_number: payload.phone_number,
-        zip_code: payload.zip_code,
-        street_name: payload.street_name,
+        postal_code: payload.postal_code,
         state_code: payload.state_code,
-        locality: payload.locality,
-        house_number: payload.house_number,
-        country: payload.country,
-        address: payload.address,
-        history: [
-      {
-        status: 'completed',
-        date: new Date(),
-      },
-      {
-        status: 'recived',
-        date: '',
-      },
-      {
-        status: 'ongoing',
-        date: '',
-      },
-      {
-        status: 'delivery',
-        date: '',
-      },
-      {
-        status: 'finished',
-        date: '',
-      },
-    ]
-
+        city: payload.city,
+        address_line1: payload.address_line1,
+        country_code: payload.country_code,
+        address_line2: payload.address_line2,
       };
     },
   );

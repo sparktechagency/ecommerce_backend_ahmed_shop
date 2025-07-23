@@ -13,16 +13,35 @@ import { Order } from '../orders/orders.model';
 import Shop from '../shop/shop.model';
 import { StripeAccount } from '../stripeAccount/stripeAccount.model';
 import { stripe } from '../payment/payment.service';
+import { User } from '../user/user.models';
 // import PickupAddress from '../pickupAddress/pickupAddress.model';
 
 
 const createProductService = async (payload: TProduct) => {
 
-  // const isPickupAddressExist = await PickupAddress.findOne({});
+  const selllerExist:any = await User.findById(payload.sellerId);
 
-  // if (!isPickupAddressExist) {  
-  //   throw new AppError(400, 'Pickup Address is not Found!!');
-  // }
+  if (!selllerExist) {
+    throw new AppError(400, 'Seller is not Found!!');
+  }
+
+  const requiredFields = [
+    'city',
+    'address_line1',
+    'country_code',
+    'postal_code',
+    'state_code',
+    'phone',
+  ];
+
+  for (const field of requiredFields) {
+    if (!selllerExist[field]) {
+      throw new AppError(
+        400,
+        `Please update your profile. The field "${field}" is required. Please input valid information.`,
+      );
+    }
+  }
 
     // const isStripeConnectedAccount = await StripeAccount.findOne({
     //   userId: payload.sellerId,
@@ -233,6 +252,29 @@ const getAllProductBySellerQuery = async (query: Record<string, unknown>, userId
 };
 
 
+const getAllProductByOfferBySellerQuery = async (
+  query: Record<string, unknown>,
+  userId: string,
+) => {
+  console.log('query==', query);
+
+  const productQuery = new QueryBuilder(
+    Product.find({ isDeleted: false, sellerId: userId }).select("name"),
+    query,
+  )
+    .search(['name', 'details'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
+
+  const result = await productQuery.modelQuery;
+
+  const meta = await productQuery.countTotal();
+  return { meta, result: result };
+};
+
+
 const getAllProductOverviewBySellerQuery = async (
   query: Record<string, unknown>,
   sellerId: string,
@@ -318,7 +360,7 @@ const getBestSellingProductQuery = async (sellerId: string) => {
 
   const bestSellingProduct = productsWithSales.sort(
     (a: any, b: any) => b.soldAmount - a.soldAmount,
-  ).slice(0, 1); // i can controll data from here 
+  ).slice(0, 3); // i can controll data from here 
 
   if (!bestSellingProduct) {
     throw new AppError(404, 'Best Selling Product Not Found!!');
@@ -426,6 +468,7 @@ export const productService = {
   createProductService,
   getAllProductQuery,
   getAllProductBySellerQuery,
+  getAllProductByOfferBySellerQuery,
   getBestSellingProductQuery,
   getAllProductOverviewBySellerQuery,
   getSingleProductQuery,
