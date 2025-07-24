@@ -34,7 +34,6 @@ const createShippingRequest = catchAsync(async (req, res) => {
 
 const createShippingRates = catchAsync(async (req, res) => {
   const id = req.params.id;
-  const shippingData = req.body;
   const result = await shippingService.createShippingRatesService(id);
 
   // Send response

@@ -5,6 +5,10 @@ import { Order } from './orders.model';
 import Product from '../product/product.model';
 import Cart from '../cart/cart.model';
 import { User } from '../user/user.models';
+import {
+  postcodeValidator,
+  postcodeValidatorExistsForCountry,
+} from 'postcode-validator';
 
 const orderCreateService = async (payload: any) => {
   console.log('payload==', payload);
@@ -17,6 +21,42 @@ const orderCreateService = async (payload: any) => {
   if (user.role !== 'customer') {
     throw new AppError(400, 'User is not authorized as a User!!');
   }
+
+  console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+
+  const isValid = postcodeValidator(payload.postal_code, payload.country_code);
+  console.log('isValid================', isValid);
+  console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-1');
+
+  if (!isValid) {
+    throw new AppError(400, 'Postal code is not valid!');
+  }
+  // console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-2');
+  const isValidCountry = postcodeValidatorExistsForCountry(
+    payload.country_code,
+  );
+  console.log('isValidCountry================', isValidCountry);
+
+  if (!isValidCountry) {
+    throw new AppError(400, 'Country is not valid!');
+  }
+
+  function validateDutchPostalCode(postalCode: string) {
+    const regex = /^[1-9]\d{3}\s?(?:[A-PR-TV-Z][A-Z]|S[BCE-RT-Z])$/i;
+    return regex.test(postalCode);
+  }
+
+  console.log(
+    '!validateDutchPostalCode(payload.postal_code)-3',
+    !validateDutchPostalCode(payload.postal_code),
+  );
+
+  if (validateDutchPostalCode(payload.postal_code)) {
+    throw new AppError(400, 'Invalid Dutch postal code!');
+  }
+
+
+  console.log('dsfafsafaf')
 
   const cartItems = await Cart.find({ customerId: payload.customerId });
   console.log(' cartItems==', cartItems);

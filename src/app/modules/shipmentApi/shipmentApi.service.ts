@@ -148,9 +148,9 @@ const createShippingRequestService = async (id: any) => {
               Code: 'IN', // Inches
               Description: 'Inches',
             },
-            Length: avgLength.toString(),
-            Width: avgWidth.toString(),
-            Height: avgHeight.toString(),
+            Length: Math.round(avgLength).toString(),
+            Width: Math.round(avgWidth).toString(),
+            Height: Math.round(avgHeight).toString(),
           },
           PackageWeight: {
             UnitOfMeasurement: {
@@ -172,8 +172,8 @@ const createShippingRequestService = async (id: any) => {
   };
 
   try {
+    console.log('Shipment Request Data:', shipmentRequestData);
     const accessToken = await getAccessToken();
-    console.log('accessToken is here', accessToken);
 
     // const shippingRequestURL = `${config.shipment_url}/shipments/v1/ship`;
     // console.log('shippingRequestURL:', shippingRequestURL);
@@ -190,20 +190,16 @@ const createShippingRequestService = async (id: any) => {
     });
 
     console.log('Shipment Request Response:', response.data);
+    console.log('Shipment Request Response:1', response.data.ShipmentResponse);
+    console.log(
+      'Shipment Request Response:2',
+      response.data.ShipmentResponse.Response,
+    );
 
-    if (response.data.ShipmentResponse.Response.ResponseStatus.Code === '1') {
-      const updateOrder = await Order.findByIdAndUpdate(
-        id,
-        {
-          tacking_number:
-            response.data.ShipmentResponse.ShipmentResults
-              .ShipmentIdentificationNumber,
-        },
-        { new: true },
-      );
-    }
-    return response.data;
+   return response.data
+  
   } catch (error:any) {
+    console.log('Error creating shipment request:', error);
 
     const updateOrder = await Order.findByIdAndUpdate(
       id,
@@ -405,7 +401,7 @@ const createShippingRatesService = async (id: string) => {
         Shipment: {
           Shipper: {
             Name: order.sellerId.fullName,
-            ShipperNumber: '0J47J6', // This is required
+            ShipperNumber: '0J47J6',
             Address: {
               AddressLine: [
                 order.sellerId.address_line1,
@@ -428,7 +424,6 @@ const createShippingRatesService = async (id: string) => {
             },
           },
           ShipFrom: {
-            // This is required
             Name: order.sellerId.fullName,
             Address: {
               AddressLine: [
@@ -442,17 +437,15 @@ const createShippingRatesService = async (id: string) => {
             },
           },
           PaymentDetails: {
-            // This is required
             ShipmentCharge: {
               Type: '01',
               BillShipper: {
-                AccountNumber: '0J47J6', // ShipperNumber goes here
+                AccountNumber: '0J47J6', 
               },
             },
           },
           Service: {
-            // This is required
-            Code: '03', // Example: '03' for Ground
+            Code: '03',
             Description: 'Ground',
           },
           Package: {
@@ -465,23 +458,27 @@ const createShippingRatesService = async (id: string) => {
                 Code: 'IN',
                 Description: 'Inches',
               },
-              Length: avgLength.toString(),
-              Width: avgWidth.toString(),
-              Height: avgHeight.toString(),
+              Length: Math.round(avgLength).toString(),
+              Width: Math.round(avgWidth).toString(),
+              Height: Math.round(avgHeight).toString(),
             },
             PackageWeight: {
               UnitOfMeasurement: {
                 Code: 'LBS',
                 Description: 'Pounds',
               },
-              Weight: Number(totalWeight) >= 150 ? '150' : totalWeight.toString(),
+              Weight:
+                Number(totalWeight) >= 150 ? '150' : totalWeight.toString(),
             },
           },
         },
       },
     };
 
-    console.log('rateRequest', rateRequest);
+    console.log('rateRequest0', rateRequest);
+    console.log('rateRequest1', rateRequest.RateRequest.Request);
+    console.log('rateRequest2', rateRequest.RateRequest.Shipment);
+    console.log('rateRequest3', rateRequest.RateRequest.Shipment.Package);
 
 
     const response = await axios.post(ratingURL, rateRequest, {

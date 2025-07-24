@@ -26,10 +26,11 @@ export const stripe = new Stripe(
 // console.log('stripe==', stripe);
 
 const addPaymentService = async (payload: any) => {
-
-  console.log("payment payload", payload);
+  console.log('payment payload', payload);
 
   const order = await Order.findById(payload.orderId);
+
+  console.log('order==', order);
 
   if (!order) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
@@ -45,74 +46,75 @@ const addPaymentService = async (payload: any) => {
   }
 
   if (order.customerId.toString() !== payload.customerId.toString()) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'You are not valid Customer for this order');
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'You are not valid Customer for this order',
+    );
   }
 
-
-  if(!payload.shippingCost){
+  if (!payload.shippingCost) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Shipping cost is required');
-
   }
-  if(payload.shippingCost < 0){
-    throw new AppError(httpStatus.BAD_REQUEST, 'Shipping cost can not be negative');
-
+  if (payload.shippingCost < 0) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Shipping cost can not be negative',
+    );
   }
 
-  const productStock = order.productList.map((product)=>{
+  const productStock = order.productList.map((product) => {
     const singleProduct: any = Product.findById(product.productId);
-    if(!singleProduct){
+    if (!singleProduct) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Product not found');
     }
 
     if (singleProduct.availableStock < product.quantity) {
-      throw new AppError(httpStatus.BAD_REQUEST, `${singleProduct.name} is out of stock`);
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        `${singleProduct.name} is out of stock`,
+      );
     }
-    return singleProduct
-  })
+    return singleProduct;
+  });
 
-  const totalPaymentAmount = Number(order.totalAmount);
+  const totalPaymentAmount = Number(order.totalAmount + payload.shippingCost);
 
-    console.log('totalPaymentAmount', totalPaymentAmount);
+  console.log('totalPaymentAmount', totalPaymentAmount);
 
-    const stripeAccountCompleted = await StripeAccount.findOne({
-      userId: order.sellerId,
-    });
+  const stripeAccountCompleted = await StripeAccount.findOne({
+    userId: order.sellerId,
+  });
 
-    if (!stripeAccountCompleted) {
-      throw new AppError(404, 'Seller Stripe Account is not found!!');
-    }
+  if (!stripeAccountCompleted) {
+    throw new AppError(404, 'Seller Stripe Account is not found!!');
+  }
 
-    if (!stripeAccountCompleted.isCompleted) {
-      throw new AppError(404, 'Seller Stripe Account is not Completed !!');
-    }
+  if (!stripeAccountCompleted.isCompleted) {
+    throw new AppError(404, 'Seller Stripe Account is not Completed !!');
+  }
 
-    const paymentInfo = {
-      orderId: order._id,
-      amount: totalPaymentAmount,
-      connectedAccountId: stripeAccountCompleted.accountId,
-      shippingCost: payload.shippingCost
-    };
+  const paymentInfo = {
+    orderId: order._id,
+    amount: Math.round(totalPaymentAmount),
+    connectedAccountId: stripeAccountCompleted.accountId,
+    shippingCost: Math.round(payload.shippingCost),
+  };
+  console.log('paymentInfo', paymentInfo);
 
-    // console.log('======stripe payment');
-    const checkoutResult: any = await createCheckout(
-      payload.customerId,
-      paymentInfo,
-    );
+  // console.log('======stripe payment');
+  const checkoutResult: any = await createCheckout(
+    payload.customerId,
+    paymentInfo,
+  );
 
-    if (!checkoutResult) {
-      throw new AppError(400, 'Failed to create checkout session!');
-    }
+  if (!checkoutResult) {
+    throw new AppError(400, 'Failed to create checkout session!');
+  }
 
   return checkoutResult;
 };
 
-
-
-
-
-const getAllPaymentService = async (
-  query: Record<string, unknown>,
-) => {
+const getAllPaymentService = async (query: Record<string, unknown>) => {
   const PaymentQuery = new QueryBuilder(Payment.find({}), query)
     .search(['name'])
     .filter()
@@ -236,7 +238,6 @@ const getAllIncomeRatio = async (year: number) => {
 //     throw new Error("Invalid value for 'days'. Use '7day' or '24hour'.");
 //   }
 
-
 //   const timeSlots =
 //     days === '7day'
 //       ? Array.from({ length: 7 }, (_, i) => {
@@ -278,7 +279,7 @@ const getAllIncomeRatio = async (year: number) => {
 //                     format: '%Y-%m-%dT%H:00:00',
 //                     date: '$transactionDate',
 //                   },
-//                 }, 
+//                 },
 //               },
 //         totalIncome: { $sum: '$amount' },
 //       },
@@ -414,8 +415,6 @@ const getAllIncomeRatiobyDays = async (days: string, sellerId: string) => {
   return timeSlots;
 };
 
-
-
 const createCheckout = async (userId: any, payload: any) => {
   console.log('stripe payment', payload);
   let session = {} as { id: string };
@@ -454,20 +453,16 @@ const createCheckout = async (userId: any, payload: any) => {
     },
   };
 
-
-
   try {
     session = await stripe.checkout.sessions.create(sessionData);
   } catch (error) {
     console.log('Error', error);
   }
-  
+
   const { id: session_id, url }: any = session || {};
 
   return { url };
 };
-
-
 
 const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
   console.log('hit hise webhook controller servie');
@@ -505,48 +500,44 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
           throw new AppError(httpStatus.BAD_REQUEST, 'Payment Not Successful');
         }
 
-       
+        const adminAmount =
+          Math.round(paymentIntent.amount_received * 0.1) / 100;
+        const mainAmount = paymentIntent.amount_received / 100;
 
-          const adminAmount = Math.round(paymentIntent.amount_received * 0.1) / 100;
-          const mainAmount = (paymentIntent.amount_received ) / 100;
+        const orderdata = await Order.findById(orderId).session(session);
+        if (!orderdata) {
+          throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
+        }
 
-          const orderdata = await Order.findById(orderId).session(session);
-          if (!orderdata) {
-            throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
-          }
+        const paymentData: any = {
+          customerId: userId,
+          sellerId: orderdata?.sellerId,
+          amount: mainAmount - adminAmount,
+          adminAmount: adminAmount,
+          method: 'stripe',
+          transactionId: paymentIntentId,
+          orderId: orderdata?._id,
+          status: 'paid',
+          session_id: sessionId,
+          transactionDate: new Date(),
+        };
 
+        const payment = await Payment.create([paymentData], { session });
+        console.log('===payment', payment);
 
-            const paymentData: any = {
-              customerId: userId,
-              sellerId: orderdata?.sellerId,
-              amount: mainAmount - adminAmount,
-              adminAmount: adminAmount,
-              method: 'stripe',
-              transactionId: paymentIntentId,
-              orderId: orderdata?._id,
-              status: 'paid',
-              session_id: sessionId,
-              transactionDate: new Date(),
-            };
-
-            const payment = await Payment.create([paymentData], { session });
-            console.log('===payment', payment);
-
-            if (!payment) {
-              throw new AppError(
-                httpStatus.BAD_REQUEST,
-                'Payment record creation failed',
-              );
-            }
-
-
-
+        if (payment.length === 0) {
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Payment record creation failed',
+          );
+        }
 
         const order = await Order.findByIdAndUpdate(
           orderId,
           { paymentStatus: 'paid' },
           { new: true, session },
         );
+        console.log('===order==update', order);
 
         if (!order) {
           throw new AppError(httpStatus.BAD_REQUEST, 'Order not found');
@@ -568,9 +559,9 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
 
             const updatedProduct = await Product.findOneAndUpdate(
               {
-                _id: product.productId
-              }, 
-              { $inc: { availableStock: -product.quantity } }, 
+                _id: product.productId,
+              },
+              { $inc: { availableStock: -product.quantity } },
               { new: true, session },
             );
 
@@ -581,9 +572,76 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
           }),
         );
 
+        console.log('productlist== up console');
+        const shipment = await shippingService.createShippingRequestService(
+          order._id,
+        );
 
-       const shipment =
-         await shippingService.createShippingRequestService(order._id);
+        console.log('shipment==create1', shipment.ShipmentResponse);
+        console.log('shipment==create2', shipment.ShipmentResponse.Response);
+        console.log(
+          'shipment==create3',
+          shipment.ShipmentResponse.Response.ResponseStatus,
+        );
+        console.log(
+          'shipment==create4',
+          shipment.ShipmentResponse.Response.ResponseStatus.Code,
+        );
+        console.log(
+          'type of',
+          typeof shipment.ShipmentResponse.Response.ResponseStatus.Code,
+        );
+
+        //  if (shipment.ShipmentResponse.Response.ResponseStatus.Code === '1') {
+        //   console.log('true');
+        //    const trackingNumber =
+        //      shipment.ShipmentResponse.ShipmentResults
+        //        .ShipmentIdentificationNumber;
+        //        console.log('trackingNumber==', trackingNumber);
+        //        console.log('type of trackingNumber==',typeof(trackingNumber));
+        //        console.log('orderId  =',  orderId);
+        //    const updatedOrderWithTracking = await Order.findByIdAndUpdate(
+        //      orderId,
+        //      { tracking_number: trackingNumber },
+        //      { new: true, session },
+        //    );
+        //    console.log(
+        //      'Order updated with tracking number:',
+        //      updatedOrderWithTracking,
+        //    );
+        //  } else {
+        //   console.log('true');
+        //    const updatedOrderWithError = await Order.findByIdAndUpdate(
+        //      orderId,
+        //      { tracking_number: 'error' },
+        //      { new: true, session },
+        //    );
+        //    console.log(
+        //      'Order update failed with error:',
+        //      updatedOrderWithError,
+        //    );
+        //  }
+
+        const shipmentCode =
+          shipment?.ShipmentResponse?.Response?.ResponseStatus?.Code;
+        const trackingNumber =
+          shipmentCode === '1'
+            ? shipment.ShipmentResponse.ShipmentResults
+                .ShipmentIdentificationNumber
+            : 'error';
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+          orderId,
+          { tracking_number: trackingNumber },
+          { new: true, session },
+        );
+
+        if (!updatedOrder) {
+          throw new AppError(
+            httpStatus.BAD_REQUEST,
+            'Failed to update order with tracking number',
+          );
+        }
 
         const notificationData = {
           userId: userId,
@@ -613,11 +671,10 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
           throw new AppError(404, 'Notification create faild!!');
         }
 
-  
+        console.log('last console.log');
 
         await session.commitTransaction();
         transactionCommitted = true;
-        session.endSession();
         console.log('Payment completed successfully:', {
           sessionId,
           paymentIntentId,
@@ -657,6 +714,7 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
         // res.status(400).send();
         return;
     }
+   
   } catch (err) {
     console.error('Error processing webhook event:', err);
     if (!transactionCommitted) {
@@ -732,7 +790,6 @@ const getAllEarningRatio = async (year: number, businessId: string) => {
   return months;
 };
 
-
 const refreshAccountConnect = async (
   id: string,
   host: string,
@@ -802,9 +859,7 @@ const createStripeAccount = async (
     type: 'account_onboarding',
   });
 
-
   // console.log('onboardingLink-2', onboardingLink);
-
 
   return {
     success: true,
@@ -833,8 +888,6 @@ const stripeConnectedAccountLoginQuery = async (landlordUserId: string) => {
 
   return account;
 };
-
-
 
 // const transferBalanceService = async (
 //   accountId: string,
