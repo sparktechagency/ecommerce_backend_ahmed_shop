@@ -630,11 +630,15 @@ const automaticCompletePayment = async (event: Stripe.Event): Promise<void> => {
                 .ShipmentIdentificationNumber
             : 'error';
 
+            console.log('trackingNumber==', trackingNumber);
+
         const updatedOrder = await Order.findByIdAndUpdate(
-          orderId,
-          { tracking_number: trackingNumber },
+          order._id,
+          { tacking_number: trackingNumber },
           { new: true, session },
         );
+
+        console.log('Order updated with tracking number:', updatedOrder);
 
         if (!updatedOrder) {
           throw new AppError(

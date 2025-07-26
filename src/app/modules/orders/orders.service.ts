@@ -5,10 +5,8 @@ import { Order } from './orders.model';
 import Product from '../product/product.model';
 import Cart from '../cart/cart.model';
 import { User } from '../user/user.models';
-import {
-  postcodeValidator,
-  postcodeValidatorExistsForCountry,
-} from 'postcode-validator';
+// import { validate } from 'postcode-validator';
+import postalCodes from 'postal-codes-js';
 
 
 const orderCreateService = async (payload: any) => {
@@ -25,22 +23,27 @@ const orderCreateService = async (payload: any) => {
 
   console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
 
-  const isValid = postcodeValidator(payload.postal_code, payload.country_code);
+  const isValid = postalCodes.validate(
+    payload.country_code,
+    payload.postal_code,
+  );
+
+  // const isValid = validate(payload.postal_code, payload.country_code);
   console.log('isValid================', isValid);
   console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-1');
 
   if (!isValid) {
     throw new AppError(400, 'Postal code is not valid!');
   }
-  // console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-2');
-  const isValidCountry = postcodeValidatorExistsForCountry(
-    payload.country_code,
-  );
-  console.log('isValidCountry================', isValidCountry);
+  // // console.log('dsfaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-2');
+  // const isValidCountry = postcodeValidatorExistsForCountry(
+  //   payload.country_code,
+  // );
+  // console.log('isValidCountry================', isValidCountry);
 
-  if (!isValidCountry) {
-    throw new AppError(400, 'Country is not valid!');
-  }
+  // if (!isValidCountry) {
+  //   throw new AppError(400, 'Country is not valid!');
+  // }
 
   function validateDutchPostalCode(postalCode: string) {
     const regex = /^[1-9]\d{3}\s?(?:[A-PR-TV-Z][A-Z]|S[BCE-RT-Z])$/i;
